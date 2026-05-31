@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/cavir/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/38593b92-efeb-4601-a055-8dbc74388861/1a9f180d-e819-4e0f-9a8b-0bb7eac30c56/skills/docx/**)",
+      "Bash(extract-text \"C:\\\\Users\\\\cavir\\\\OneDrive\\\\Muestra para profesionales.docx\")",
+      "Bash(pandoc \"C:\\\\Users\\\\cavir\\\\OneDrive\\\\Muestra para profesionales.docx\" -t markdown)"
+    ]
+  }
+}
