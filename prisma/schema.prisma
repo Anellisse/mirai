@@ -1,0 +1,443 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  CLINICO_SENIOR
+  CLINICO
+  SUPERVISOR
+}
+
+enum ReportStatus {
+  DRAFT
+  IN_PROGRESS
+  REVIEW
+  SUPERVISOR_REVIEW
+  APPROVED
+  EXPORTED
+  FINAL
+}
+
+enum SectionType {
+  IDENTIFICATION
+  CONSULTATION_REASON
+  BACKGROUND
+  PROCEDURE_TESTS
+  OBSERVED_BEHAVIOR
+  QUESTIONNAIRE_SYMPTOMS
+  COGNITIVE_EVALUATION
+  SOCIAL_COGNITION
+  RESULTS_SYNTHESIS
+  CONCLUSIONS
+  RECOMMENDATIONS
+  ANNEXES
+}
+
+enum SectionStatus {
+  PENDING
+  AI_GENERATED
+  CLINICIAN_REVIEWING
+  APPROVED
+}
+
+enum GeneratedBy {
+  HUMAN
+  AI
+  RULES
+}
+
+enum ImportSource {
+  Q_GLOBAL
+  TEA_CORRIGE
+  CEDETI
+  MANUAL
+}
+
+enum FinalReportSource {
+  SYSTEM_PDF
+  UPLOADED
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Organization ─────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  subtitle  String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  patients Patient[]
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  title               String?
+  registrationNumber  String?
+  role                Role
+  organizationId      String
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?
+  isActive            Boolean   @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  organization      Organization    @relation(fields: [organizationId], references: [id])
+  authoredReports   Report[]        @relation("AuthorReports")
+  supervisedReports Report[]        @relation("SupervisorReports")
+  auditLogs         AuditLog[]
+  accessRequests    AccessRequest[] @relation("RequesterRequests")
+  reviewedRequests  AccessRequest[] @relation("ReviewerRequests")
+  accessGrants      AccessGrant[]   @relation("UserGrants")
+  grantedAccess     AccessGrant[]   @relation("GrantedByUser")
+  finalReports      FinalReport[]
+  dictionaryEdits   DictionaryHistory[]
+}
+
+// ─── Patient ──────────────────────────────────────────────────────────────────
+
+model Patient {
+  id             String    @id @default(cuid())
+  organizationId String
+  rutEncrypted   String?
+  name           String
+  birthDate      DateTime?
+  gender         String?
+  email          String?
+  phone          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  reports      Report[]
+}
+
+// ─── Report ───────────────────────────────────────────────────────────────────
+
+model Report {
+  id                 String       @id @default(cuid())
+  patientId          String
+  authorId           String
+  supervisorId       String?
+  organizationId     String
+  status             ReportStatus @default(DRAFT)
+  frameworkCode      String
+  version            Int          @default(1)
+  selectedTests      String[]
+  omitCit            Boolean      @default(false)
+  lockedBy           String?
+  lockedAt           DateTime?
+  consultationReason String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  deletedAt          DateTime?
+
+  patient              Patient               @relation(fields: [patientId], references: [id])
+  author               User                  @relation("AuthorReports", fields: [authorId], references: [id])
+  supervisor           User?                 @relation("SupervisorReports", fields: [supervisorId], references: [id])
+  sections             ReportSection[]
+  testResults          TestResult[]
+  accessRequests       AccessRequest[]
+  accessGrants         AccessGrant[]
+  finalReport          FinalReport?
+  importedReports      ImportedScoreReport[]
+  interviewForm        InterviewForm?
+  observationChecklist ObservationChecklist?
+  clinicalConclusion   ClinicalConclusion?
+  recommendations      ReportRecommendation[]
+}
+
+// ─── ReportSection ────────────────────────────────────────────────────────────
+
+model ReportSection {
+  id              String        @id @default(cuid())
+  reportId        String
+  sectionType     SectionType
+  status          SectionStatus @default(PENDING)
+  content         String?
+  sourceData      Json?
+  generatedBy     GeneratedBy   @default(HUMAN)
+  aiRawOutput     String?
+  clinicianEdited Boolean       @default(false)
+  approvedBy      String?
+  approvedAt      DateTime?
+  orderIndex      Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  report Report @relation(fields: [reportId], references: [id])
+
+  @@unique([reportId, sectionType])
+}
+
+// ─── Framework & Tests ────────────────────────────────────────────────────────
+
+model EvaluationFrameworkConfig {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  domains CognitiveDomain[]
+}
+
+model CognitiveDomain {
+  id          String  @id @default(cuid())
+  frameworkId String
+  code        String
+  name        String
+  axis        Int?
+  orderIndex  Int     @default(0)
+
+  framework EvaluationFrameworkConfig @relation(fields: [frameworkId], references: [id])
+  tests     CognitiveTest[]
+}
+
+model CognitiveTest {
+  id                   String   @id @default(cuid())
+  code                 String   @unique
+  name                 String
+  abbreviation         String?
+  type                 String
+  applicableFrameworks String[]
+  requiresInformant    Boolean  @default(false)
+  domainId             String?
+  isActive             Boolean  @default(true)
+  orderIndex           Int      @default(0)
+
+  domain      CognitiveDomain? @relation(fields: [domainId], references: [id])
+  testResults TestResult[]
+}
+
+model TestResult {
+  id           String    @id @default(cuid())
+  reportId     String
+  testId       String
+  scores       Json
+  descriptor   String?
+  notes        String?
+  importedFrom String?
+  validatedAt  DateTime?
+  validatedBy  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  report Report        @relation(fields: [reportId], references: [id])
+  test   CognitiveTest @relation(fields: [testId], references: [id])
+}
+
+// ─── Interview & Observation ──────────────────────────────────────────────────
+
+model InterviewForm {
+  id        String   @id @default(cuid())
+  reportId  String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  report Report @relation(fields: [reportId], references: [id])
+}
+
+model ObservationChecklist {
+  id        String   @id @default(cuid())
+  reportId  String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  report Report @relation(fields: [reportId], references: [id])
+}
+
+// ─── Clinical Dictionary ──────────────────────────────────────────────────────
+
+model ClinicalDictionary {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  category  String
+  content   String
+  variables Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  history DictionaryHistory[]
+}
+
+model DictionaryHistory {
+  id           String   @id @default(cuid())
+  dictionaryId String
+  content      String
+  editedById   String
+  editedAt     DateTime @default(now())
+
+  dictionary ClinicalDictionary @relation(fields: [dictionaryId], references: [id])
+  editedBy   User               @relation(fields: [editedById], references: [id])
+}
+
+// ─── Recommendations ──────────────────────────────────────────────────────────
+
+model RecommendationBlock {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  title    String
+  content  String
+  category String
+  isActive Boolean @default(true)
+
+  rules      RecommendationRule[]
+  reportRecs ReportRecommendation[]
+}
+
+model RecommendationRule {
+  id        String @id @default(cuid())
+  blockId   String
+  condition Json
+  priority  Int    @default(0)
+
+  block RecommendationBlock @relation(fields: [blockId], references: [id])
+}
+
+model ReportRecommendation {
+  id         String  @id @default(cuid())
+  reportId   String
+  blockId    String
+  customText String?
+  orderIndex Int     @default(0)
+
+  report Report              @relation(fields: [reportId], references: [id])
+  block  RecommendationBlock @relation(fields: [blockId], references: [id])
+}
+
+// ─── Conclusions ──────────────────────────────────────────────────────────────
+
+model ClinicalConclusion {
+  id         String    @id @default(cuid())
+  reportId   String    @unique
+  content    String
+  aiDraft    String?
+  approvedAt DateTime?
+  approvedBy String?
+
+  report     Report               @relation(fields: [reportId], references: [id])
+  hypotheses DiagnosticHypothesis[]
+}
+
+model DiagnosticHypothesis {
+  id           String @id @default(cuid())
+  conclusionId String
+  content      String
+  orderIndex   Int    @default(0)
+
+  conclusion ClinicalConclusion @relation(fields: [conclusionId], references: [id])
+}
+
+// ─── PDF Import ───────────────────────────────────────────────────────────────
+
+model ImportedScoreReport {
+  id               String       @id @default(cuid())
+  reportId         String
+  source           ImportSource
+  pdfHash          String
+  pdfPath          String
+  rawExtractedData Json?
+  validatedData    Json?
+  validatedAt      DateTime?
+  validatedById    String?
+  createdAt        DateTime     @default(now())
+
+  report Report @relation(fields: [reportId], references: [id])
+}
+
+// ─── Access Control ───────────────────────────────────────────────────────────
+
+model AccessRequest {
+  id              String              @id @default(cuid())
+  requesterId     String
+  reportId        String
+  reason          String
+  status          AccessRequestStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime            @default(now())
+
+  requester  User         @relation("RequesterRequests", fields: [requesterId], references: [id])
+  reviewedBy User?        @relation("ReviewerRequests", fields: [reviewedById], references: [id])
+  report     Report       @relation(fields: [reportId], references: [id])
+  grant      AccessGrant?
+}
+
+model AccessGrant {
+  id          String    @id @default(cuid())
+  requestId   String    @unique
+  userId      String
+  reportId    String
+  expiresAt   DateTime?
+  grantedById String
+  createdAt   DateTime  @default(now())
+
+  request   AccessRequest @relation(fields: [requestId], references: [id])
+  user      User          @relation("UserGrants", fields: [userId], references: [id])
+  report    Report        @relation(fields: [reportId], references: [id])
+  grantedBy User          @relation("GrantedByUser", fields: [grantedById], references: [id])
+}
+
+// ─── Final Report ─────────────────────────────────────────────────────────────
+
+model FinalReport {
+  id            String            @id @default(cuid())
+  reportId      String            @unique
+  source        FinalReportSource
+  fileHash      String
+  filePath      String
+  finalizedById String
+  signature     String
+  version       Int               @default(1)
+  createdAt     DateTime          @default(now())
+
+  report      Report @relation(fields: [reportId], references: [id])
+  finalizedBy User   @relation(fields: [finalizedById], references: [id])
+}
+
+// ─── Audit Log (append-only) ──────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
