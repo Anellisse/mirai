@@ -1,0 +1,164 @@
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma.service';
+import { EncryptionService } from '../encryption/encryption.service';
+import { CreatePatientDto } from './dto/create-patient.dto';
+import { UpdatePatientDto } from './dto/update-patient.dto';
+import { PatientQueryDto } from './dto/patient-query.dto';
+
+@Injectable()
+export class PatientsService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
+  ) {}
+
+  async isAssigned(userId: string, patientId: string): Promise<boolean> {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: patientId, deletedAt: null },
+    });
+    if (!patient) return false;
+    if (patient.createdById === userId) return true;
+
+    const report = await this.prisma.report.findFirst({
+      where: {
+        patientId,
+        deletedAt: null,
+        OR: [{ authorId: userId }, { supervisorId: userId }],
+      },
+    });
+    return !!report;
+  }
+
+  private async hasActiveGrant(userId: string, patientId: string): Promise<boolean> {
+    const grant = await this.prisma.accessGrant.findFirst({
+      where: {
+        userId,
+        patientId,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+    });
+    return !!grant;
+  }
+
+  async findAll(userId: string, organizationId: string, query: PatientQueryDto) {
+    const where: Record<string, unknown> = {
+      organizationId,
+      deletedAt: null,
+    };
+
+    if (query.rut) {
+      where.rutHash = this.encryption.hashRut(query.rut);
+    }
+
+    if (query.name) {
+      where.name = { contains: query.name, mode: 'insensitive' };
+    }
+
+    const patients = await this.prisma.patient.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        birthDate: true,
+        gender: true,
+        createdById: true,
+        _count: { select: { reports: { where: { deletedAt: null } } } },
+      },
+    });
+
+    return Promise.all(
+      patients.map(async (p) => {
+        const assigned = await this.isAssigned(userId, p.id);
+        const base = {
+          id: p.id,
+          name: p.name,
+          isAssigned: assigned,
+          reportCount: (p as any)._count?.reports ?? 0,
+        };
+        if (!assigned) return base;
+        return { ...base, birthDate: p.birthDate, gender: p.gender };
+      }),
+    );
+  }
+
+  async findOne(patientId: string, userId: string, organizationId: string) {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: patientId, organizationId, deletedAt: null },
+      include: {
+        reports: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, status: true, frameworkCode: true, createdAt: true },
+        },
+      },
+    });
+
+    if (!patient) throw new NotFoundException('Paciente no encontrado');
+
+    const assigned = await this.isAssigned(userId, patientId);
+    const granted = !assigned && (await this.hasActiveGrant(userId, patientId));
+
+    if (!assigned && !granted) throw new ForbiddenException('Sin acceso al paciente');
+
+    const { rutEncrypted, ...safe } = patient as any;
+    const rut = rutEncrypted ? this.encryption.decryptRut(rutEncrypted) : null;
+    return { ...safe, rut };
+  }
+
+  async create(dto: CreatePatientDto, userId: string, organizationId: string) {
+    const data: Record<string, unknown> = {
+      name: dto.name,
+      birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+      gender: dto.gender,
+      email: dto.email,
+      phone: dto.phone,
+      organizationId,
+      createdById: userId,
+    };
+
+    if (dto.rut) {
+      data.rutHash = this.encryption.hashRut(dto.rut);
+      data.rutEncrypted = this.encryption.encryptRut(dto.rut);
+    }
+
+    return this.prisma.patient.create({ data: data as any });
+  }
+
+  async update(patientId: string, dto: UpdatePatientDto, userId: string, organizationId: string) {
+    const assigned = await this.isAssigned(userId, patientId);
+    if (!assigned) throw new ForbiddenException('Sin acceso al paciente');
+
+    return this.prisma.patient.update({
+      where: { id: patientId },
+      data: {
+        name: dto.name,
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+        gender: dto.gender,
+        email: dto.email,
+        phone: dto.phone,
+      },
+    });
+  }
+
+  async remove(patientId: string, organizationId: string) {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: patientId, organizationId, deletedAt: null },
+    });
+    if (!patient) throw new NotFoundException('Paciente no encontrado');
+    return this.prisma.patient.update({
+      where: { id: patientId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async requestAccess(patientId: string, requesterId: string, reason: string) {
+    return this.prisma.accessRequest.create({
+      data: { requesterId, patientId, reason },
+    });
+  }
+}
