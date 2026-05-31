@@ -10,14 +10,15 @@ export class EncryptionService {
     const hmacSecret = process.env.RUT_HMAC_SECRET;
     const encryptionKey = process.env.ENCRYPTION_KEY;
     if (!hmacSecret) throw new Error('RUT_HMAC_SECRET is required');
-    if (!encryptionKey || encryptionKey.length !== 64)
+    if (hmacSecret.length < 32) throw new Error('RUT_HMAC_SECRET must be at least 32 characters');
+    if (!encryptionKey || !/^[0-9a-fA-F]{64}$/.test(encryptionKey))
       throw new Error('ENCRYPTION_KEY must be a 64-char hex string (32 bytes)');
     this.hmacSecret = hmacSecret;
     this.encryptionKey = Buffer.from(encryptionKey, 'hex');
   }
 
   normalizeRut(rut: string): string {
-    return rut.replace(/[.\-\s]/g, '').toUpperCase();
+    return rut.replace(/[\s.-]/g, '').toUpperCase();
   }
 
   hashRut(rut: string): string {
@@ -35,7 +36,9 @@ export class EncryptionService {
   }
 
   decryptRut(cipherText: string): string {
-    const [ivHex, encryptedHex, authTagHex] = cipherText.split(':');
+    const parts = cipherText.split(':');
+    if (parts.length !== 3) throw new Error('Invalid ciphertext format');
+    const [ivHex, encryptedHex, authTagHex] = parts;
     const iv = Buffer.from(ivHex, 'hex');
     const encrypted = Buffer.from(encryptedHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');

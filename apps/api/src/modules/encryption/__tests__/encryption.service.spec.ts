@@ -1,11 +1,17 @@
 import { EncryptionService } from '../encryption.service';
 
-// Set env vars before instantiating
-process.env.RUT_HMAC_SECRET = 'test-hmac-secret-key-for-jest-do-not-use-in-prod-xx';
-process.env.ENCRYPTION_KEY = 'aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899';
-
 describe('EncryptionService', () => {
   let service: EncryptionService;
+
+  beforeAll(() => {
+    process.env.RUT_HMAC_SECRET = 'test-hmac-secret-key-for-jest-do-not-use-in-prod-xx';
+    process.env.ENCRYPTION_KEY = 'aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899';
+  });
+
+  afterAll(() => {
+    delete process.env.RUT_HMAC_SECRET;
+    delete process.env.ENCRYPTION_KEY;
+  });
 
   beforeEach(() => {
     service = new EncryptionService();
