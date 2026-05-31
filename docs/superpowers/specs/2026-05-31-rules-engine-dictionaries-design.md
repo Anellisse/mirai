@@ -27,14 +27,40 @@ Además existe `RAW` para puntajes brutos que requieren conversión via baremo n
 
 ## 2. Escalas de descriptores
 
-Cuatro escalas. Los rangos exactos de `NEURO_Z` y `NEURO_PERCENTILE` los define el admin en seed/UI (basados en la clasificación de la Sociedad Americana de Neuropsicología). Los de Wechsler son estándar.
+Seis escalas. Los rangos de `NEURO_Z` y `NEURO_PERCENTILE` los define el admin (Sociedad Americana de Neuropsicología). WISC-V y WAIS-IV usan **labels distintos** aunque los rangos numéricos sean iguales, por eso tienen escalas separadas.
 
-| Código | Aplica a | Rangos de referencia |
+| Código | Aplica a | Labels (de menor a mayor) |
 |---|---|---|
 | `NEURO_Z` | Z-scores (tests neuropsicológicos generales) | Definidos por admin |
-| `NEURO_PERCENTILE` | Percentiles (mismos labels que NEURO_Z) | Definidos por admin |
-| `WECHSLER_SCALED` | Escalares subtests WISC-V/WAIS-IV | 1–3 Extremadamente bajo … 17–19 Extremadamente alto |
-| `WECHSLER_SS` | Índices compuestos WISC-V/WAIS-IV | ≤69 Extremadamente bajo … ≥130 Extremadamente alto |
+| `NEURO_PERCENTILE` | Percentiles | Definidos por admin (mismos labels que NEURO_Z) |
+| `WISC_SS` | Índices compuestos WISC-V (SS, media 100) | Extremadamente bajo · Limítrofe · Medio bajo · Medio · Medio alto · Superior · Muy alto |
+| `WISC_SCALED` | Escalares subtests WISC-V (media 10) | Extremadamente bajo · Limítrofe · Medio bajo · Medio · Medio alto · Superior · Muy alto |
+| `WAIS_SS` | Índices compuestos WAIS-IV (SS, media 100) | Muy bajo · Limítrofe · Bajo el promedio · Promedio · Alto · Superior · Muy superior |
+| `WAIS_SCALED` | Escalares subtests WAIS-IV (media 10) | Muy bajo · Limítrofe · Bajo el promedio · Promedio · Alto · Superior · Muy superior |
+
+**Rangos numéricos WISC_SS y WAIS_SS (iguales, labels distintos):**
+
+| Rango SS | Label WISC-V | Label WAIS-IV |
+|---|---|---|
+| ≥ 130 | Muy alto | Muy superior |
+| 120–129 | Superior | Superior |
+| 110–119 | Medio alto | Alto |
+| 90–109 | Medio | Promedio |
+| 80–89 | Medio bajo | Bajo el promedio |
+| 70–79 | Limítrofe | Limítrofe |
+| ≤ 69 | Extremadamente bajo | Muy bajo |
+
+**Rangos numéricos WISC_SCALED y WAIS_SCALED (iguales, labels iguales a sus respectivos SS):**
+
+| Rango escalar | Label WISC-V | Label WAIS-IV |
+|---|---|---|
+| 17–19 | Muy alto | Muy superior |
+| 14–16 | Superior | Superior |
+| 12–13 | Medio alto | Alto |
+| 8–11 | Medio | Promedio |
+| 6–7 | Medio bajo | Bajo el promedio |
+| 4–5 | Limítrofe | Limítrofe |
+| 1–3 | Extremadamente bajo | Muy bajo |
 
 Cada `DescriptorRange` tiene: `minScore`, `maxScore`, `label` (texto completo), `labelShort` (abreviatura), `orderIndex`.
 
@@ -283,7 +309,136 @@ Las tablas normativas NO se seedean — cada institución las carga con sus prop
 
 ---
 
-## 9. Fuera de scope en este paso
+## 9. Textos borrador para diccionario clínico (seed 07)
+
+Variables disponibles: `{{paciente}}`, `{{puntaje}}` (SS o escalar), `{{percentil}}`, `{{descriptor}}`.
+
+### WISC-V — Índices compuestos
+
+**ICV — Índice de Comprensión Verbal**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy alto | `WISC5.ICV.muy_alto` | "El Índice de Comprensión Verbal (ICV) de {{paciente}} se ubica en el rango Muy alto (SS = {{puntaje}}; Pc {{percentil}}), evidenciando un desarrollo destacado de las habilidades verbales. Muestra una sólida capacidad para comprender y expresar conceptos verbales complejos, razonar con el lenguaje y evocar conocimiento adquirido." |
+| Superior | `WISC5.ICV.superior` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando habilidades verbales bien desarrolladas que superan a la mayoría de sus pares. Destaca en la comprensión del lenguaje, el razonamiento verbal y la expresión de conceptos." |
+| Medio alto | `WISC5.ICV.medio_alto` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Medio alto (SS = {{puntaje}}; Pc {{percentil}}), indicando habilidades verbales por sobre el promedio. La comprensión del lenguaje, el razonamiento verbal y el vocabulario se encuentran adecuadamente desarrollados." |
+| Medio | `WISC5.ICV.medio` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Medio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado para su edad. La comprensión del lenguaje oral, el razonamiento verbal y el manejo del vocabulario se encuentran dentro de los parámetros normativos." |
+| Medio bajo | `WISC5.ICV.medio_bajo` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Medio bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando un desarrollo de las habilidades verbales por debajo del promedio esperado para su edad. Se observan dificultades relativas en la comprensión del lenguaje, el razonamiento verbal y/o la expresión de conceptos." |
+| Limítrofe | `WISC5.ICV.limitrofe` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), indicando un desarrollo verbal significativamente inferior al esperado. Las habilidades de comprensión del lenguaje, razonamiento verbal y vocabulario se encuentran considerablemente disminuidas respecto a su grupo de referencia." |
+| Extremadamente bajo | `WISC5.ICV.extremadamente_bajo` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Extremadamente bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando un desarrollo verbal muy por debajo del esperado para su edad. Las habilidades de comprensión del lenguaje, razonamiento verbal y expresión conceptual presentan compromisos significativos que requieren atención especializada." |
+
+**IVE — Índice Visuoespacial**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy alto | `WISC5.IVE.muy_alto` | "El Índice Visuoespacial (IVE) se ubica en el rango Muy alto (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una capacidad sobresaliente para analizar, sintetizar y reproducir información visual y espacial. El procesamiento visoperceptivo y la organización espacial son fortalezas destacadas." |
+| Superior | `WISC5.IVE.superior` | "El Índice Visuoespacial (IVE) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando habilidades visoespaciales bien por sobre el promedio. Muestra adecuada capacidad para analizar relaciones espaciales y reproducir configuraciones visuales complejas." |
+| Medio alto | `WISC5.IVE.medio_alto` | "El Índice Visuoespacial (IVE) se ubica en el rango Medio alto (SS = {{puntaje}}; Pc {{percentil}}), indicando habilidades visoespaciales sobre el promedio esperado para su edad." |
+| Medio | `WISC5.IVE.medio` | "El Índice Visuoespacial (IVE) se sitúa en el rango Medio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado para su edad. El análisis visoespacial y la construcción de figuras a partir de modelos se encuentran dentro de parámetros normativos." |
+| Medio bajo | `WISC5.IVE.medio_bajo` | "El Índice Visuoespacial (IVE) se ubica en el rango Medio bajo (SS = {{puntaje}}; Pc {{percentil}}), indicando dificultades relativas en el procesamiento visoespacial. Se observan limitaciones en el análisis de relaciones espaciales y/o la reproducción de configuraciones visuales." |
+| Limítrofe | `WISC5.IVE.limitrofe` | "El Índice Visuoespacial (IVE) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en el procesamiento visoespacial que se alejan considerablemente del promedio esperado para su edad." |
+| Extremadamente bajo | `WISC5.IVE.extremadamente_bajo` | "El Índice Visuoespacial (IVE) se ubica en el rango Extremadamente bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en el análisis y procesamiento visoespacial que requieren evaluación e intervención especializada." |
+
+**MRT — Memoria de Trabajo**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy alto | `WISC5.MRT.muy_alto` | "El Índice de Memoria de Trabajo (MRT) se ubica en el rango Muy alto (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una capacidad sobresaliente para retener, manipular y operar con información en la memoria de trabajo. Esta constituye una fortaleza cognitiva significativa." |
+| Superior | `WISC5.MRT.superior` | "El Índice de Memoria de Trabajo (MRT) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando una capacidad bien desarrollada para mantener y manipular información de forma activa." |
+| Medio alto | `WISC5.MRT.medio_alto` | "El Índice de Memoria de Trabajo (MRT) se ubica en el rango Medio alto (SS = {{puntaje}}; Pc {{percentil}}), indicando una capacidad por sobre el promedio para retener y operar con información de forma simultánea." |
+| Medio | `WISC5.MRT.medio` | "El Índice de Memoria de Trabajo (MRT) se sitúa en el rango Medio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado para su edad. La capacidad para mantener y manipular información activamente se encuentra dentro de parámetros normativos." |
+| Medio bajo | `WISC5.MRT.medio_bajo` | "El Índice de Memoria de Trabajo (MRT) se ubica en el rango Medio bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando limitaciones en la capacidad para retener y operar con información de forma activa. Esto puede impactar el seguimiento de instrucciones complejas y el aprendizaje que requiere procesamiento simultáneo." |
+| Limítrofe | `WISC5.MRT.limitrofe` | "El Índice de Memoria de Trabajo (MRT) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en la capacidad de retención y manipulación activa de información, con impacto probable en el funcionamiento académico y cotidiano." |
+| Extremadamente bajo | `WISC5.MRT.extremadamente_bajo` | "El Índice de Memoria de Trabajo (MRT) se ubica en el rango Extremadamente bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en la memoria de trabajo que afectan de manera importante la capacidad de aprendizaje y el funcionamiento ejecutivo general." |
+
+**IRP — Índice de Razonamiento Fluido**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy alto | `WISC5.IRP.muy_alto` | "El Índice de Razonamiento Fluido (IRP) se ubica en el rango Muy alto (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una capacidad sobresaliente para identificar patrones, razonar inductivamente y resolver problemas novedosos sin apoyo del conocimiento previo." |
+| Superior | `WISC5.IRP.superior` | "El Índice de Razonamiento Fluido (IRP) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando una capacidad bien desarrollada para el razonamiento lógico-abstracto y la resolución de problemas novedosos." |
+| Medio alto | `WISC5.IRP.medio_alto` | "El Índice de Razonamiento Fluido (IRP) se ubica en el rango Medio alto (SS = {{puntaje}}; Pc {{percentil}}), indicando una capacidad de razonamiento abstracto y resolución de problemas por sobre el promedio." |
+| Medio | `WISC5.IRP.medio` | "El Índice de Razonamiento Fluido (IRP) se sitúa en el rango Medio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado para su edad. La capacidad para identificar relaciones, razonar inductivamente y resolver problemas nuevos se encuentra dentro de parámetros normativos." |
+| Medio bajo | `WISC5.IRP.medio_bajo` | "El Índice de Razonamiento Fluido (IRP) se ubica en el rango Medio bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando dificultades relativas en el razonamiento abstracto y la resolución de problemas novedosos, por debajo de lo esperado para su edad." |
+| Limítrofe | `WISC5.IRP.limitrofe` | "El Índice de Razonamiento Fluido (IRP) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en la capacidad de razonamiento lógico-abstracto e inductivo." |
+| Extremadamente bajo | `WISC5.IRP.extremadamente_bajo` | "El Índice de Razonamiento Fluido (IRP) se ubica en el rango Extremadamente bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en el razonamiento abstracto y fluido que impactan de manera importante en la capacidad de resolución de problemas." |
+
+**IVP — Índice de Velocidad de Procesamiento**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy alto | `WISC5.IVP.muy_alto` | "El Índice de Velocidad de Procesamiento (IVP) se ubica en el rango Muy alto (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad sobresaliente para procesar información visual simple de forma rápida y eficiente." |
+| Superior | `WISC5.IVP.superior` | "El Índice de Velocidad de Procesamiento (IVP) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando una velocidad de procesamiento visomotor bien desarrollada." |
+| Medio alto | `WISC5.IVP.medio_alto` | "El Índice de Velocidad de Procesamiento (IVP) se ubica en el rango Medio alto (SS = {{puntaje}}; Pc {{percentil}}), indicando una velocidad de procesamiento de información visual por sobre el promedio esperado." |
+| Medio | `WISC5.IVP.medio` | "El Índice de Velocidad de Procesamiento (IVP) se sitúa en el rango Medio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado para su edad. La velocidad para escanear, identificar y ejecutar tareas visuales simples se encuentra dentro de parámetros normativos." |
+| Medio bajo | `WISC5.IVP.medio_bajo` | "El Índice de Velocidad de Procesamiento (IVP) se ubica en el rango Medio bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad de procesamiento de información visual y motora por debajo del promedio, lo que puede impactar el rendimiento en tareas que requieren rapidez y eficiencia." |
+| Limítrofe | `WISC5.IVP.limitrofe` | "El Índice de Velocidad de Procesamiento (IVP) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en la velocidad con que procesa y responde ante información visual simple." |
+| Extremadamente bajo | `WISC5.IVP.extremadamente_bajo` | "El Índice de Velocidad de Procesamiento (IVP) se ubica en el rango Extremadamente bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad de procesamiento muy lenta que impacta de manera transversal el rendimiento cognitivo general." |
+
+---
+
+### WAIS-IV — Índices compuestos
+
+**ICV — Índice de Comprensión Verbal**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy superior | `WAIS4.ICV.muy_superior` | "El Índice de Comprensión Verbal (ICV) de {{paciente}} se ubica en el rango Muy superior (SS = {{puntaje}}; Pc {{percentil}}), evidenciando un desarrollo sobresaliente de las habilidades verbales. Muestra una sólida capacidad para razonar con el lenguaje, comprender conceptos abstractos y evocar conocimiento cristalizado." |
+| Superior | `WAIS4.ICV.superior` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando habilidades verbales bien desarrolladas que superan a la mayoría de sus pares. Destaca en comprensión del lenguaje, razonamiento verbal y vocabulario." |
+| Alto | `WAIS4.ICV.alto` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Alto (SS = {{puntaje}}; Pc {{percentil}}), indicando habilidades verbales por sobre el promedio. La comprensión del lenguaje oral, el razonamiento verbal y el manejo del vocabulario están bien desarrollados." |
+| Promedio | `WAIS4.ICV.promedio` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Promedio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado. La comprensión del lenguaje, el razonamiento verbal y el vocabulario se encuentran dentro de parámetros normativos." |
+| Bajo el promedio | `WAIS4.ICV.bajo_promedio` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Bajo el promedio (SS = {{puntaje}}; Pc {{percentil}}), evidenciando un rendimiento verbal inferior al esperado. Se observan dificultades relativas en la comprensión del lenguaje, el razonamiento verbal y/o la expresión de conceptos." |
+| Limítrofe | `WAIS4.ICV.limitrofe` | "El Índice de Comprensión Verbal (ICV) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), indicando compromisos significativos en las habilidades verbales que se alejan considerablemente del promedio." |
+| Muy bajo | `WAIS4.ICV.muy_bajo` | "El Índice de Comprensión Verbal (ICV) se ubica en el rango Muy bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en las habilidades verbales, incluyendo comprensión del lenguaje, razonamiento verbal y vocabulario." |
+
+**IRP — Índice de Razonamiento Perceptual**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy superior | `WAIS4.IRP.muy_superior` | "El Índice de Razonamiento Perceptual (IRP) se ubica en el rango Muy superior (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una capacidad sobresaliente para analizar información visual, identificar relaciones espaciales y resolver problemas no verbales de manera eficiente." |
+| Superior | `WAIS4.IRP.superior` | "El Índice de Razonamiento Perceptual (IRP) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando habilidades visoperceptivas y de razonamiento no verbal bien por sobre el promedio." |
+| Alto | `WAIS4.IRP.alto` | "El Índice de Razonamiento Perceptual (IRP) se ubica en el rango Alto (SS = {{puntaje}}; Pc {{percentil}}), indicando habilidades de razonamiento visoespacial y perceptivo por sobre el promedio esperado." |
+| Promedio | `WAIS4.IRP.promedio` | "El Índice de Razonamiento Perceptual (IRP) se sitúa en el rango Promedio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado. La capacidad para analizar información visual y resolver problemas no verbales se encuentra dentro de parámetros normativos." |
+| Bajo el promedio | `WAIS4.IRP.bajo_promedio` | "El Índice de Razonamiento Perceptual (IRP) se ubica en el rango Bajo el promedio (SS = {{puntaje}}; Pc {{percentil}}), evidenciando dificultades relativas en el razonamiento visoperceptivo y la resolución de problemas no verbales." |
+| Limítrofe | `WAIS4.IRP.limitrofe` | "El Índice de Razonamiento Perceptual (IRP) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en el razonamiento visoperceptivo y espacial." |
+| Muy bajo | `WAIS4.IRP.muy_bajo` | "El Índice de Razonamiento Perceptual (IRP) se ubica en el rango Muy bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en la capacidad de razonamiento visoperceptivo y espacial." |
+
+**MT — Memoria de Trabajo**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy superior | `WAIS4.MT.muy_superior` | "El Índice de Memoria de Trabajo (MT) se ubica en el rango Muy superior (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una capacidad sobresaliente para mantener y manipular activamente información en la memoria de corto plazo." |
+| Superior | `WAIS4.MT.superior` | "El Índice de Memoria de Trabajo (MT) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando una capacidad bien desarrollada para retener y operar con información de forma activa." |
+| Alto | `WAIS4.MT.alto` | "El Índice de Memoria de Trabajo (MT) se ubica en el rango Alto (SS = {{puntaje}}; Pc {{percentil}}), indicando una capacidad por sobre el promedio para mantener y manipular información simultáneamente." |
+| Promedio | `WAIS4.MT.promedio` | "El Índice de Memoria de Trabajo (MT) se sitúa en el rango Promedio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado. La capacidad para mantener y operar con información de forma activa se encuentra dentro de parámetros normativos." |
+| Bajo el promedio | `WAIS4.MT.bajo_promedio` | "El Índice de Memoria de Trabajo (MT) se ubica en el rango Bajo el promedio (SS = {{puntaje}}; Pc {{percentil}}), evidenciando limitaciones en la capacidad de retención y manipulación activa de información, con posible impacto en tareas que requieren procesamiento simultáneo." |
+| Limítrofe | `WAIS4.MT.limitrofe` | "El Índice de Memoria de Trabajo (MT) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en la memoria de trabajo con impacto probable en el funcionamiento ejecutivo y el aprendizaje." |
+| Muy bajo | `WAIS4.MT.muy_bajo` | "El Índice de Memoria de Trabajo (MT) se ubica en el rango Muy bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos severos en la capacidad de retención y manipulación activa de información." |
+
+**VP — Velocidad de Procesamiento**
+
+| Descriptor | Código | Texto borrador |
+|---|---|---|
+| Muy superior | `WAIS4.VP.muy_superior` | "El Índice de Velocidad de Procesamiento (VP) se ubica en el rango Muy superior (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad sobresaliente para procesar y responder ante información visual simple de manera rápida y precisa." |
+| Superior | `WAIS4.VP.superior` | "El Índice de Velocidad de Procesamiento (VP) se sitúa en el rango Superior (SS = {{puntaje}}; Pc {{percentil}}), reflejando una velocidad de procesamiento visomotor bien desarrollada." |
+| Alto | `WAIS4.VP.alto` | "El Índice de Velocidad de Procesamiento (VP) se ubica en el rango Alto (SS = {{puntaje}}; Pc {{percentil}}), indicando una velocidad de procesamiento de información visual por sobre el promedio esperado." |
+| Promedio | `WAIS4.VP.promedio` | "El Índice de Velocidad de Procesamiento (VP) se sitúa en el rango Promedio (SS = {{puntaje}}; Pc {{percentil}}), acorde al nivel esperado. La velocidad para escanear, identificar y ejecutar tareas visuales simples se encuentra dentro de parámetros normativos." |
+| Bajo el promedio | `WAIS4.VP.bajo_promedio` | "El Índice de Velocidad de Procesamiento (VP) se ubica en el rango Bajo el promedio (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad de procesamiento de información visual y motora por debajo del promedio, lo que puede afectar el rendimiento en tareas que requieren rapidez y eficiencia." |
+| Limítrofe | `WAIS4.VP.limitrofe` | "El Índice de Velocidad de Procesamiento (VP) se sitúa en el rango Limítrofe (SS = {{puntaje}}; Pc {{percentil}}), evidenciando compromisos significativos en la velocidad de procesamiento visomotor." |
+| Muy bajo | `WAIS4.VP.muy_bajo` | "El Índice de Velocidad de Procesamiento (VP) se ubica en el rango Muy bajo (SS = {{puntaje}}; Pc {{percentil}}), evidenciando una velocidad de procesamiento muy lenta que impacta de manera transversal el rendimiento cognitivo." |
+
+---
+
+### Síntesis (sección 6)
+
+| Código | Texto borrador |
+|---|---|
+| `SINTESIS.SNP_CHC.base` | "En síntesis, el perfil cognitivo de {{paciente}} muestra {{dominios_afectados}}. Los resultados deben interpretarse en el contexto del desarrollo integral del/la evaluado/a y los antecedentes clínicos relevantes." |
+| `SINTESIS.ESTANDAR.base` | "En síntesis, la evaluación neuropsicológica de {{paciente}} evidencia {{dominios_afectados}}. Los hallazgos deben integrarse con la información clínica, conductual y contextual para una comprensión integral del funcionamiento cognitivo." |
+
+---
+
+## 11. Fuera de scope en este paso
 
 - UI de ingreso de puntajes (Paso 5)
 - PDF adjunto de resultados (Paso 5)
