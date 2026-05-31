@@ -6,5 +6,4 @@ dist/
 !*.env.example
 .env.local
 storage/
-prisma/migrations/
 .DS_Store
