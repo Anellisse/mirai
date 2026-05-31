@@ -32,6 +32,17 @@ model AccessRequest {
 }
 ```
 
+### AccessGrant
+```prisma
+model AccessGrant {
+  // campos existentes...
+  reportId    String?       // cambia de requerido a opcional (consistente con AccessRequest)
+  patientId   String?       // nuevo: para grants de acceso a nivel paciente
+
+  patient     Patient?      @relation(fields: [patientId], references: [id])
+}
+```
+
 ### Variables de entorno necesarias
 - `RUT_HMAC_SECRET` — clave para HMAC-SHA256 del RUT
 - `ENCRYPTION_KEY` — clave AES-256-GCM para cifrado del RUT
@@ -163,7 +174,7 @@ Si existe alguna `ReportSection` con `generatedBy: AI` y `status: AI_GENERATED` 
 |---|---|
 | 1 | Seleccionar marco clínico: SNP-CHC o Estándar |
 | 2 | Seleccionar tests del catálogo, agrupados por dominio |
-| 3 | Asignar supervisor (opcional). Confirmar → crea informe → redirige. |
+| 3 | Asignar supervisor (opcional): dropdown con usuarios de la org con rol `SUPERVISOR`, `CLINICO_SENIOR`, `ADMIN` o `SUPER_ADMIN`. Confirmar → crea informe → redirige. |
 
 ### Informe — Vista general
 
