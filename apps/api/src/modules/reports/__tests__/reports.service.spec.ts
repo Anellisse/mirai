@@ -7,7 +7,7 @@ const author: any = { sub: 'author-1', role: Role.CLINICO, organizationId: 'org-
 const ALL_SECTION_TYPES = Object.values(SectionType);
 
 function makePrisma(overrides: Record<string, unknown> = {}) {
-  return {
+  const prisma: any = {
     report: {
       create: jest.fn().mockResolvedValue({ id: 'report-1', status: 'DRAFT' }),
       findFirst: jest.fn().mockResolvedValue(null),
@@ -23,7 +23,23 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
     auditLog: {
       create: jest.fn().mockResolvedValue({}),
     },
+    patient: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'p-1' }),
+    },
+    user: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    accessGrant: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    $transaction: jest.fn().mockImplementation((fn: (tx: any) => Promise<any>) =>
+      fn({
+        report: { update: prisma.report.update },
+        auditLog: { create: prisma.auditLog.create },
+      }),
+    ),
   };
+  return prisma;
 }
 
 function makeStateMachine(nextStatus = 'IN_PROGRESS') {

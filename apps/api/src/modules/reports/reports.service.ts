@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma.service';
 import { ReportStateMachineService, TransitionAction } from './report-state-machine.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
-import { UserPayload } from '@mirai/shared-types';
+import { Role, UserPayload } from '@mirai/shared-types';
 import { ReportStatus, SectionStatus, SectionType } from '@prisma/client';
 
 @Injectable()
@@ -17,7 +17,30 @@ export class ReportsService {
     private readonly stateMachine: ReportStateMachineService,
   ) {}
 
+  private activeGrantWhere(userId: string) {
+    return {
+      userId,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    };
+  }
+
   async create(dto: CreateReportDto, user: UserPayload) {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: dto.patientId, organizationId: user.organizationId, deletedAt: null },
+    });
+    if (!patient) throw new NotFoundException('Paciente no encontrado');
+
+    if (dto.supervisorId) {
+      const supervisor = await this.prisma.user.findFirst({
+        where: {
+          id: dto.supervisorId,
+          organizationId: user.organizationId,
+          role: { in: [Role.SUPERVISOR, Role.CLINICO_SENIOR, Role.ADMIN, Role.SUPER_ADMIN] },
+        },
+      });
+      if (!supervisor) throw new NotFoundException('Supervisor no encontrado o sin permisos');
+    }
+
     const report = await this.prisma.report.create({
       data: {
         patientId: dto.patientId,
@@ -53,7 +76,7 @@ export class ReportsService {
         OR: [
           { authorId: user.sub },
           { supervisorId: user.sub },
-          { accessGrants: { some: { userId: user.sub, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } } },
+          { accessGrants: { some: this.activeGrantWhere(user.sub) } },
         ],
       },
       orderBy: { updatedAt: 'desc' },
@@ -85,11 +108,7 @@ export class ReportsService {
       report.authorId === user.sub ||
       report.supervisorId === user.sub ||
       (await this.prisma.accessGrant.findFirst({
-        where: {
-          userId: user.sub,
-          reportId,
-          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-        },
+        where: { ...this.activeGrantWhere(user.sub), reportId },
       }));
 
     if (!canAccess) throw new ForbiddenException('Sin acceso al informe');
@@ -115,6 +134,15 @@ export class ReportsService {
     });
     if (!report) throw new NotFoundException('Informe no encontrado');
 
+    const editableStatuses: ReportStatus[] = [
+      ReportStatus.DRAFT,
+      ReportStatus.IN_PROGRESS,
+      ReportStatus.REVIEW,
+      ReportStatus.SUPERVISOR_REVIEW,
+    ];
+    if (!editableStatuses.includes(report.status))
+      throw new ForbiddenException('El informe no está en estado editable');
+
     const canEdit = report.authorId === user.sub || report.supervisorId === user.sub;
     if (!canEdit) throw new ForbiddenException('Sin permiso para editar secciones');
 
@@ -123,13 +151,28 @@ export class ReportsService {
     });
     if (!section) throw new NotFoundException('Sección no encontrada');
 
+    if (section.status === SectionStatus.APPROVED)
+      throw new ForbiddenException('Sección ya aprobada');
+
     const newStatus =
       section.status === SectionStatus.PENDING ? SectionStatus.CLINICIAN_REVIEWING : section.status;
 
-    return this.prisma.reportSection.update({
+    const updated = await this.prisma.reportSection.update({
       where: { id: section.id },
       data: { content, status: newStatus, clinicianEdited: true },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.sub,
+        action: 'SECTION_SAVED',
+        resource: 'ReportSection',
+        resourceId: section.id,
+        metadata: { sectionType, reportId },
+      },
+    });
+
+    return updated;
   }
 
   async approveSection(reportId: string, sectionType: string, user: UserPayload) {
@@ -141,10 +184,27 @@ export class ReportsService {
     const canApprove = report.authorId === user.sub || report.supervisorId === user.sub;
     if (!canApprove) throw new ForbiddenException('Sin permiso para aprobar secciones');
 
-    return this.prisma.reportSection.update({
-      where: { reportId_sectionType: { reportId, sectionType: sectionType as SectionType } },
+    const section = await this.prisma.reportSection.findFirst({
+      where: { reportId, sectionType: sectionType as SectionType },
+    });
+    if (!section) throw new NotFoundException('Sección no encontrada');
+
+    const updated = await this.prisma.reportSection.update({
+      where: { id: section.id },
       data: { status: SectionStatus.APPROVED, approvedBy: user.sub, approvedAt: new Date() },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.sub,
+        action: 'SECTION_APPROVED',
+        resource: 'ReportSection',
+        resourceId: section.id,
+        metadata: { sectionType, reportId },
+      },
+    });
+
+    return updated;
   }
 
   async executeTransition(reportId: string, action: string, user: UserPayload) {
@@ -156,19 +216,23 @@ export class ReportsService {
 
     const nextStatus = this.stateMachine.transition(report, action as TransitionAction, user);
 
-    const updated = await this.prisma.report.update({
-      where: { id: reportId },
-      data: { status: nextStatus },
-    });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.report.update({
+        where: { id: reportId },
+        data: { status: nextStatus },
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.sub,
-        action: `REPORT_TRANSITION_${action.toUpperCase()}`,
-        resource: 'Report',
-        resourceId: reportId,
-        metadata: { from: report.status, to: nextStatus },
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.sub,
+          action: `REPORT_TRANSITION_${action.toUpperCase()}`,
+          resource: 'Report',
+          resourceId: reportId,
+          metadata: { from: report.status, to: nextStatus },
+        },
+      });
+
+      return result;
     });
 
     return updated;
