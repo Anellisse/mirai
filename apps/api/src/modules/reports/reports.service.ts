@@ -207,6 +207,27 @@ export class ReportsService {
     return updated;
   }
 
+  async checkEditAccess(reportId: string, user: UserPayload): Promise<void> {
+    const report = await this.prisma.report.findFirst({
+      where: { id: reportId, organizationId: user.organizationId, deletedAt: null },
+    });
+    if (!report) throw new NotFoundException('Informe no encontrado');
+
+    const locked = ['APPROVED', 'EXPORTED', 'FINAL'] as const;
+    if (locked.includes(report.status as any)) {
+      throw new ForbiddenException('El informe no puede ser modificado en su estado actual');
+    }
+
+    const isAuthor = report.authorId === user.sub;
+    const isSupervisor = report.supervisorId === user.sub;
+    if (isAuthor || isSupervisor) return;
+
+    const grant = await this.prisma.accessGrant.findFirst({
+      where: this.activeGrantWhere(user.sub),
+    });
+    if (!grant) throw new ForbiddenException('Sin acceso a este informe');
+  }
+
   async executeTransition(reportId: string, action: string, user: UserPayload) {
     const report = await this.prisma.report.findFirst({
       where: { id: reportId, deletedAt: null },
