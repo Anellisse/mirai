@@ -223,7 +223,7 @@ export class ReportsService {
     if (isAuthor || isSupervisor) return;
 
     const grant = await this.prisma.accessGrant.findFirst({
-      where: this.activeGrantWhere(user.sub),
+      where: { ...this.activeGrantWhere(user.sub), reportId },
     });
     if (!grant) throw new ForbiddenException('Sin acceso a este informe');
   }
