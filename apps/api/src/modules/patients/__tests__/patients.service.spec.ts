@@ -21,14 +21,6 @@ const mockPatient = {
   deletedAt: null,
 };
 
-const mockUser = {
-  sub: 'user-1',
-  email: 'test@test.com',
-  role: Role.CLINICO,
-  organizationId: 'org-1',
-  twoFactorVerified: true,
-};
-
 function makePrisma(overrides: Record<string, unknown> = {}) {
   return {
     patient: {
@@ -139,6 +131,16 @@ describe('PatientsService', () => {
       });
       const service = new PatientsService(prisma as any, makeEncryption() as any);
       await expect(service.findOne('patient-1', 'user-1', 'org-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('returns patient when user has an active access grant', async () => {
+      const prisma = makePrisma({
+        findFirst: jest.fn().mockResolvedValue({ ...mockPatient, createdById: 'other' }),
+      });
+      prisma.accessGrant.findFirst = jest.fn().mockResolvedValue({ id: 'grant-1' });
+      const service = new PatientsService(prisma as any, makeEncryption() as any);
+      const result = await service.findOne('patient-1', 'user-1', 'org-1');
+      expect(result.id).toBe('patient-1');
     });
   });
 

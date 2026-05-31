@@ -105,7 +105,7 @@ export class PatientsService {
 
     if (!assigned && !granted) throw new ForbiddenException('Sin acceso al paciente');
 
-    const { rutEncrypted, ...safe } = patient as any;
+    const { rutEncrypted, rutHash, ...safe } = patient as any;
     const rut = rutEncrypted ? this.encryption.decryptRut(rutEncrypted) : null;
     return { ...safe, rut };
   }
@@ -134,7 +134,7 @@ export class PatientsService {
     if (!assigned) throw new ForbiddenException('Sin acceso al paciente');
 
     return this.prisma.patient.update({
-      where: { id: patientId },
+      where: { id: patientId, organizationId },
       data: {
         name: dto.name,
         birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
@@ -145,18 +145,27 @@ export class PatientsService {
     });
   }
 
-  async remove(patientId: string, organizationId: string) {
+  async remove(patientId: string, organizationId: string, userId: string) {
     const patient = await this.prisma.patient.findFirst({
       where: { id: patientId, organizationId, deletedAt: null },
     });
     if (!patient) throw new NotFoundException('Paciente no encontrado');
+
+    const assigned = await this.isAssigned(userId, patientId);
+    if (!assigned) throw new ForbiddenException('Sin acceso al paciente');
+
     return this.prisma.patient.update({
       where: { id: patientId },
       data: { deletedAt: new Date() },
     });
   }
 
-  async requestAccess(patientId: string, requesterId: string, reason: string) {
+  async requestAccess(patientId: string, requesterId: string, reason: string, organizationId: string) {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: patientId, organizationId, deletedAt: null },
+    });
+    if (!patient) throw new NotFoundException('Paciente no encontrado');
+
     return this.prisma.accessRequest.create({
       data: { requesterId, patientId, reason },
     });
