@@ -4,6 +4,7 @@ dist/
 .next/
 *.env
 !*.env.example
+.env.local
 storage/
 prisma/migrations/
 .DS_Store
