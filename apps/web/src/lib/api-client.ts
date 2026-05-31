@@ -58,6 +58,39 @@ export const apiClient = {
     }),
   approveSection: (reportId: string, sectionType: string) =>
     apiFetch(`/reports/${reportId}/sections/${sectionType}/approve`, { method: 'POST' }),
+
+  // Interview
+  getInterview: (reportId: string) =>
+    apiFetch<{ data: InterviewData } | null>(`/reports/${reportId}/interview`),
+  upsertInterview: (reportId: string, data: InterviewData) =>
+    apiFetch<{ data: InterviewData }>(`/reports/${reportId}/interview`, {
+      method: 'PUT',
+      body: JSON.stringify({ data }),
+    }),
+
+  // Observation
+  getObservation: (reportId: string) =>
+    apiFetch<{ data: ObservationData } | null>(`/reports/${reportId}/observation`),
+  upsertObservation: (reportId: string, data: ObservationData) =>
+    apiFetch<{ data: ObservationData }>(`/reports/${reportId}/observation`, {
+      method: 'PUT',
+      body: JSON.stringify({ data }),
+    }),
+
+  // Conclusion
+  getConclusion: (reportId: string) =>
+    apiFetch<ConclusionData>(`/reports/${reportId}/conclusion`),
+  upsertConclusion: (reportId: string, input: UpsertConclusionInput) =>
+    apiFetch<ConclusionData>(`/reports/${reportId}/conclusion`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+
+  // Diagnostic Codes
+  getDiagnosticCodes: (params?: { q?: string; category?: string }) => {
+    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return apiFetch<DiagnosticCode[]>(`/diagnostic-codes${qs}`);
+  },
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -126,4 +159,91 @@ export interface UpdateReportInput {
   consultationReason?: string;
   omitCit?: boolean;
   selectedTests?: string[];
+}
+
+// ─── Interview types ───────────────────────────────────────────────────────────
+
+export interface InterviewSection1 {
+  whoConsults?: string;
+  whyConsults?: string;
+  purposeOfEvaluation?: string;
+}
+
+export interface InterviewSection2 {
+  householdMembers?: string;
+  householdRelationType?: string;
+  primaryCaregivers?: string;
+  psychosocialContext?: string;
+}
+
+export interface InterviewData {
+  section1?: InterviewSection1;
+  section2?: InterviewSection2;
+  section3?: Record<string, string | boolean | undefined>;
+  section4?: Record<string, string | undefined>;
+  section5?: Record<string, string | undefined>;
+  section6?: Record<string, string | undefined>;
+  section7?: Record<string, string | boolean | undefined>;
+  section8?: Record<string, string | undefined>;
+}
+
+// ─── Observation types ────────────────────────────────────────────────────────
+
+export interface ObservationData {
+  cooperacion?: number;
+  motivacion?: number;
+  ansiedad?: number;
+  toleranciaFrustracion?: number;
+  atencionSostenida?: number;
+  nivelActividad?: 'hipo' | 'normo' | 'hiper';
+  impulsividad?: number;
+  fatiga?: number;
+  comprensionInstrucciones?: number;
+  expresionVerbal?: 'fluida' | 'reducida' | 'excesiva';
+  calidadLenguaje?: number;
+  contactoVisual?: number;
+  reciprocidadSocial?: number;
+  relacionEvaluador?: number;
+  coordinacionMotora?: number;
+  conductasEstereotipadas?: number;
+  rigidezConductual?: number;
+  additionalObservations?: string;
+}
+
+// ─── Diagnostic & Conclusion types ────────────────────────────────────────────
+
+export interface DiagnosticCode {
+  code: string;
+  name: string;
+  category: string;
+  specifiers: string[];
+}
+
+export interface HypothesisData {
+  dxCode: string;
+  dxName: string;
+  specifiers: string[];
+  justification?: string;
+  status: 'PROVISIONAL' | 'CONFIRMED' | 'RULE_OUT';
+  orderIndex: number;
+}
+
+export interface ConclusionData {
+  reportId: string;
+  processNarrative?: string;
+  cognitiveImpact?: string;
+  emotionalNote?: string;
+  includeEmotionalNote: boolean;
+  closingNote?: string;
+  content: string;
+  hypotheses: HypothesisData[];
+}
+
+export interface UpsertConclusionInput {
+  processNarrative?: string;
+  cognitiveImpact?: string;
+  emotionalNote?: string;
+  includeEmotionalNote?: boolean;
+  closingNote?: string;
+  hypotheses?: HypothesisData[];
 }
