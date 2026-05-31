@@ -115,6 +115,7 @@ model User {
   reviewedRequests  AccessRequest[] @relation("ReviewerRequests")
   accessGrants      AccessGrant[]   @relation("UserGrants")
   grantedAccess     AccessGrant[]   @relation("GrantedByUser")
+  createdPatients   Patient[]       @relation("CreatedPatients")
   finalReports      FinalReport[]
   dictionaryEdits   DictionaryHistory[]
 }
@@ -124,7 +125,9 @@ model User {
 model Patient {
   id             String    @id @default(cuid())
   organizationId String
+  createdById    String
   rutEncrypted   String?
+  rutHash        String?
   name           String
   birthDate      DateTime?
   gender         String?
@@ -134,8 +137,11 @@ model Patient {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  reports      Report[]
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  createdBy       User            @relation("CreatedPatients", fields: [createdById], references: [id])
+  reports         Report[]
+  accessRequests  AccessRequest[]
+  accessGrants    AccessGrant[]
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -380,7 +386,8 @@ model ImportedScoreReport {
 model AccessRequest {
   id              String              @id @default(cuid())
   requesterId     String
-  reportId        String
+  reportId        String?
+  patientId       String?
   reason          String
   status          AccessRequestStatus @default(PENDING)
   reviewedById    String?
@@ -390,7 +397,8 @@ model AccessRequest {
 
   requester  User         @relation("RequesterRequests", fields: [requesterId], references: [id])
   reviewedBy User?        @relation("ReviewerRequests", fields: [reviewedById], references: [id])
-  report     Report       @relation(fields: [reportId], references: [id])
+  report     Report?      @relation(fields: [reportId], references: [id])
+  patient    Patient?     @relation(fields: [patientId], references: [id])
   grant      AccessGrant?
 }
 
@@ -398,14 +406,16 @@ model AccessGrant {
   id          String    @id @default(cuid())
   requestId   String    @unique
   userId      String
-  reportId    String
+  reportId    String?
+  patientId   String?
   expiresAt   DateTime?
   grantedById String
   createdAt   DateTime  @default(now())
 
   request   AccessRequest @relation(fields: [requestId], references: [id])
   user      User          @relation("UserGrants", fields: [userId], references: [id])
-  report    Report        @relation(fields: [reportId], references: [id])
+  report    Report?       @relation(fields: [reportId], references: [id])
+  patient   Patient?      @relation(fields: [patientId], references: [id])
   grantedBy User          @relation("GrantedByUser", fields: [grantedById], references: [id])
 }
 
