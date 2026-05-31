@@ -59,7 +59,7 @@ export function ReportOverview({ report }: { report: ReportDetail }) {
         </div>
       )}
 
-      <SectionList sections={report.sections} />
+      <SectionList sections={report.sections} reportId={report.id} />
     </div>
   );
 }

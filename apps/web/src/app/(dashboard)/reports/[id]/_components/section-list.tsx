@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { SectionSummary } from '@/lib/api-client';
 
 const SECTION_LABEL: Record<string, string> = {
@@ -15,6 +16,12 @@ const SECTION_LABEL: Record<string, string> = {
   ANNEXES: 'Anexos',
 };
 
+const SECTION_ROUTE: Record<string, string> = {
+  BACKGROUND: 'interview',
+  OBSERVED_BEHAVIOR: 'observation',
+  CONCLUSIONS: 'conclusions',
+};
+
 const STATUS_COLOR: Record<string, string> = {
   PENDING: 'bg-gray-100 text-gray-600',
   AI_GENERATED: 'bg-blue-100 text-blue-700',
@@ -29,7 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: 'Aprobado',
 };
 
-export function SectionList({ sections }: { sections: SectionSummary[] }) {
+export function SectionList({ sections, reportId }: { sections: SectionSummary[]; reportId: string }) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <table className="w-full text-sm">
@@ -41,21 +48,28 @@ export function SectionList({ sections }: { sections: SectionSummary[] }) {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {sections.map((s) => (
-            <tr key={s.sectionType} className="hover:bg-gray-50">
-              <td className="px-4 py-3">{SECTION_LABEL[s.sectionType] ?? s.sectionType}</td>
-              <td className="px-4 py-3">
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLOR[s.status] ?? 'bg-gray-100'}`}>
-                  {STATUS_LABEL[s.status] ?? s.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-right">
-                <a href="#" className="text-brand-600 hover:underline text-xs">
-                  Editar
-                </a>
-              </td>
-            </tr>
-          ))}
+          {sections.map((s) => {
+            const route = SECTION_ROUTE[s.sectionType];
+            return (
+              <tr key={s.sectionType} className="hover:bg-gray-50">
+                <td className="px-4 py-3">{SECTION_LABEL[s.sectionType] ?? s.sectionType}</td>
+                <td className="px-4 py-3">
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLOR[s.status] ?? 'bg-gray-100'}`}>
+                    {STATUS_LABEL[s.status] ?? s.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {route ? (
+                    <Link href={`/reports/${reportId}/${route}`} className="text-blue-600 hover:underline text-xs">
+                      Editar
+                    </Link>
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
