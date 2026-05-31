@@ -73,6 +73,12 @@ enum AccessRequestStatus {
   REJECTED
 }
 
+enum DiagnosticStatus {
+  PROVISIONAL
+  CONFIRMED
+  RULE_OUT
+}
+
 // ─── Organization ─────────────────────────────────────────────────────────────
 
 model Organization {
@@ -82,6 +88,8 @@ model Organization {
   logoUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  closingNoteTemplate String?
 
   users    User[]
   patients Patient[]
@@ -344,24 +352,46 @@ model ReportRecommendation {
 // ─── Conclusions ──────────────────────────────────────────────────────────────
 
 model ClinicalConclusion {
-  id         String    @id @default(cuid())
-  reportId   String    @unique
-  content    String
-  aiDraft    String?
-  approvedAt DateTime?
-  approvedBy String?
+  id                   String    @id @default(cuid())
+  reportId             String    @unique
+  content              String    @default("")
+  aiDraft              String?
+  processNarrative     String?
+  cognitiveImpact      String?
+  emotionalNote        String?
+  includeEmotionalNote Boolean   @default(false)
+  closingNote          String?
+  approvedAt           DateTime?
+  approvedBy           String?
 
-  report     Report               @relation(fields: [reportId], references: [id])
+  report     Report                 @relation(fields: [reportId], references: [id])
   hypotheses DiagnosticHypothesis[]
 }
 
 model DiagnosticHypothesis {
-  id           String @id @default(cuid())
-  conclusionId String
-  content      String
-  orderIndex   Int    @default(0)
+  id            String           @id @default(cuid())
+  conclusionId  String
+  dxCode        String
+  dxName        String
+  specifiers    String[]
+  justification String?
+  status        DiagnosticStatus @default(PROVISIONAL)
+  orderIndex    Int              @default(0)
 
-  conclusion ClinicalConclusion @relation(fields: [conclusionId], references: [id])
+  conclusion ClinicalConclusion @relation(fields: [conclusionId], references: [id], onDelete: Cascade)
+  dx         DiagnosticCode     @relation(fields: [dxCode], references: [code])
+}
+
+// ─── Diagnostic Codes ────────────────────────────────────────────────────────
+
+model DiagnosticCode {
+  code       String   @id
+  name       String
+  category   String
+  specifiers String[]
+  isActive   Boolean  @default(true)
+
+  hypotheses DiagnosticHypothesis[]
 }
 
 // ─── PDF Import ───────────────────────────────────────────────────────────────
