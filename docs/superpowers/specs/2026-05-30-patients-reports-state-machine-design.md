@@ -188,5 +188,5 @@ Si existe alguna `ReportSection` con `generatedBy: AI` y `status: AI_GENERATED` 
 
 - **`DRAFT` vs `IN_PROGRESS`:** ambos permiten editar secciones libremente. La distinción es semántica; `start` es una señal explícita del clínico de que comenzó el trabajo formal.
 - **Secciones condicionales:** `SOCIAL_COGNITION` se inicializa para ambos marcos. Su inclusión en el informe final depende de decisión clínica (si se aplicaron instrumentos como ADOS-2 o ADI-R), no del marco seleccionado.
-- **Soft delete:** pacientes y reportes nunca se eliminan físicamente. Retención ≥ 5 años por legislación chilena de salud.
+- **Soft delete:** pacientes y reportes nunca se eliminan físicamente. Retención ≥ 15 años por normativa chilena de fichas clínicas (Ley 20.584).
 - **Audit log:** toda transición de estado y todo acceso a datos sensibles escribe en `AuditLog`.
