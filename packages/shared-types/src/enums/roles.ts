@@ -1,0 +1,10 @@
+export enum Role {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  CLINICO_SENIOR = 'CLINICO_SENIOR',
+  CLINICO = 'CLINICO',
+  SUPERVISOR = 'SUPERVISOR',
+}
+
+export const ROLES_THAT_REQUIRE_SUPERVISOR: Role[] = [Role.CLINICO];
+export const ADMIN_ROLES: Role[] = [Role.SUPER_ADMIN, Role.ADMIN];
