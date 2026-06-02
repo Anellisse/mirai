@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { apiClient, FinalReportData } from '@/lib/api-client';
 
@@ -54,12 +55,12 @@ export function FinalizeForm({ reportId }: { reportId: string }) {
             <span className="text-gray-600">v{result.version}</span>
           </div>
         </div>
-        <a
+        <Link
           href={`/reports/${reportId}`}
           className="bg-brand-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-brand-700 inline-block"
         >
           ← Volver al informe
-        </a>
+        </Link>
       </div>
     );
   }
