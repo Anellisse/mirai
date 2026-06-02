@@ -140,6 +140,50 @@ export const apiClient = {
     apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-background`, { method: 'POST' }),
   generateObservation: (reportId: string) =>
     apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-observation`, { method: 'POST' }),
+
+  // Export — download Word
+  downloadDocx: async (reportId: string): Promise<void> => {
+    const authHeader = await getAuthHeader();
+    const res = await fetch(`${API_URL}/reports/${reportId}/export/docx`, {
+      headers: authHeader,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error((err as any).message ?? `API error ${res.status}`);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') ?? '';
+    const match = disposition.match(/filename="([^"]+)"/);
+    const filename = match ? decodeURIComponent(match[1]) : `Informe_${reportId}.docx`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // Finalize — seal report
+  finalizeReport: async (
+    reportId: string,
+    source: 'SYSTEM_PDF' | 'UPLOADED',
+    file?: File,
+  ): Promise<FinalReportData> => {
+    const authHeader = await getAuthHeader();
+    const form = new FormData();
+    form.append('source', source);
+    if (file) form.append('file', file);
+    const res = await fetch(`${API_URL}/reports/${reportId}/finalize`, {
+      method: 'POST',
+      headers: authHeader,
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error((err as any).message ?? `API error ${res.status}`);
+    }
+    return res.json() as Promise<FinalReportData>;
+  },
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -391,4 +435,14 @@ export interface AnnexTablesData {
   wechslerSubtests: WechslerSubtestRow[];
   battery: BatteryRow[];
   questionnaires: QuestionnaireRow[];
+}
+
+export interface FinalReportData {
+  id: string;
+  reportId: string;
+  source: 'SYSTEM_PDF' | 'UPLOADED';
+  fileHash: string;
+  signature: string;
+  version: number;
+  finalizedAt: string;
 }
