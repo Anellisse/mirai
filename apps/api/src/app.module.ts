@@ -8,6 +8,10 @@ import { InterviewModule } from './modules/interview/interview.module';
 import { ObservationModule } from './modules/observation/observation.module';
 import { ConclusionModule } from './modules/conclusion/conclusion.module';
 import { DiagnosticCodesModule } from './modules/diagnostic-codes/diagnostic-codes.module';
+import { DescriptorScalesModule } from './modules/descriptor-scales/descriptor-scales.module';
+import { TestScoreSlotsModule } from './modules/test-score-slots/test-score-slots.module';
+import { NormativeTablesModule } from './modules/normative-tables/normative-tables.module';
+import { RulesEngineModule } from './modules/rules-engine/rules-engine.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { DiagnosticCodesModule } from './modules/diagnostic-codes/diagnostic-cod
     ObservationModule,
     ConclusionModule,
     DiagnosticCodesModule,
+    DescriptorScalesModule,
+    TestScoreSlotsModule,
+    NormativeTablesModule,
+    RulesEngineModule,
   ],
 })
 export class AppModule {}

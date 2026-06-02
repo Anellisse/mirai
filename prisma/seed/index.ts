@@ -3,6 +3,9 @@ import { seedFrameworks } from './01-frameworks';
 import { seedTestsCatalog } from './02-tests-catalog';
 import { seedAdminUser } from './03-admin-user';
 import { seedDiagnosticCodes } from './04-diagnostic-codes';
+import { seedDescriptorScales } from './05-descriptor-scales';
+import { seedTestScoreSlots } from './06-test-score-slots';
+import { seedClinicalDictionaries } from './07-clinical-dictionaries';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +15,9 @@ async function main() {
   await seedTestsCatalog(prisma);
   await seedAdminUser(prisma);
   await seedDiagnosticCodes(prisma);
+  await seedDescriptorScales(prisma);
+  await seedTestScoreSlots(prisma);
+  await seedClinicalDictionaries(prisma);
   console.log('✅ Database seeded successfully');
 }
 

@@ -248,23 +248,110 @@ model CognitiveTest {
 
   domain      CognitiveDomain? @relation(fields: [domainId], references: [id])
   testResults TestResult[]
+  scoreSlots  TestScoreSlot[]
 }
 
 model TestResult {
-  id           String    @id @default(cuid())
-  reportId     String
-  testId       String
-  scores       Json
-  descriptor   String?
-  notes        String?
-  importedFrom String?
-  validatedAt  DateTime?
-  validatedBy  String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  reportId      String
+  testId        String
+  scores        Json
+  rawScore      Float?
+  standardScore Float?
+  scoreType     String?
+  percentile    Float?
+  descriptor    String?
+  notes         String?
+  importedFrom  String?
+  validatedAt   DateTime?
+  validatedBy   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   report Report        @relation(fields: [reportId], references: [id])
   test   CognitiveTest @relation(fields: [testId], references: [id])
+}
+
+// ─── Descriptor Scales ────────────────────────────────────────────────────────
+
+model DescriptorScale {
+  code      String  @id
+  name      String
+  scoreType String
+  isDefault Boolean @default(false)
+
+  ranges DescriptorRange[]
+  slots  TestScoreSlot[]
+}
+
+model DescriptorRange {
+  id         String @id @default(cuid())
+  scaleCode  String
+  minScore   Float
+  maxScore   Float
+  label      String
+  labelShort String
+  orderIndex Int    @default(0)
+
+  scale DescriptorScale @relation(fields: [scaleCode], references: [code])
+}
+
+// ─── Test Score Slots ─────────────────────────────────────────────────────────
+
+model TestScoreSlot {
+  id                          String  @id @default(cuid())
+  testId                      String
+  key                         String
+  name                        String
+  scoreType                   String
+  descriptorScaleCode         String
+  requiresConversion          Boolean @default(false)
+  isInverse                   Boolean @default(false)
+  cutoffBorderline            Float?
+  cutoffClinicallySignificant Float?
+  orderIndex                  Int     @default(0)
+
+  test            CognitiveTest   @relation(fields: [testId], references: [id])
+  descriptorScale DescriptorScale @relation(fields: [descriptorScaleCode], references: [code])
+  normativeTables NormativeTable[]
+
+  @@unique([testId, key])
+}
+
+// ─── Normative Tables ─────────────────────────────────────────────────────────
+
+model NormativeTable {
+  id                   String   @id @default(cuid())
+  slotId               String
+  name                 String
+  source               String?
+  demographicVariables String[]
+  tableType            String
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  slot    TestScoreSlot    @relation(fields: [slotId], references: [id])
+  entries NormativeEntry[]
+}
+
+model NormativeEntry {
+  id                String  @id @default(cuid())
+  tableId           String
+  ageMin            Int?
+  ageMax            Int?
+  educationYearsMin Int?
+  educationYearsMax Int?
+  gender            String?
+
+  rawScoreMin   Float?
+  rawScoreMax   Float?
+  standardScore Float?
+  percentile    Float?
+
+  formulaType String?
+  parameters  Json?
+
+  table NormativeTable @relation(fields: [tableId], references: [id])
 }
 
 // ─── Interview & Observation ──────────────────────────────────────────────────
