@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ReportDetail } from '@/lib/api-client';
 import { SectionList } from './section-list';
 import { TransitionButton } from './transition-button';
@@ -51,13 +52,17 @@ export function ReportOverview({ report }: { report: ReportDetail }) {
         <span className="text-sm text-gray-500">{report.frameworkCode}</span>
       </div>
 
-      {actions.length > 0 && (
-        <div className="flex gap-3 mb-6">
-          {actions.map((a) => (
-            <TransitionButton key={a.action} reportId={report.id} action={a.action} label={a.label} />
-          ))}
-        </div>
-      )}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        {actions.map((a) => (
+          <TransitionButton key={a.action} reportId={report.id} action={a.action} label={a.label} />
+        ))}
+        <Link
+          href={`/reports/${report.id}/evaluation`}
+          className="border border-blue-300 text-blue-700 hover:bg-blue-50 px-4 py-1.5 rounded-md text-sm font-medium"
+        >
+          Ingreso de puntajes
+        </Link>
+      </div>
 
       <SectionList sections={report.sections} reportId={report.id} />
     </div>

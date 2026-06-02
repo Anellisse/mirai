@@ -122,9 +122,11 @@ export const apiClient = {
   deleteScorePdf: (reportId: string, pdfId: string) =>
     apiFetch<{ deleted: boolean }>(`/reports/${reportId}/score-pdfs/${pdfId}`, { method: 'DELETE' }),
 
-  // Annex tables
+  // Annex tables + cognitive profile
   getAnnexTables: (reportId: string) =>
     apiFetch<AnnexTablesData>(`/reports/${reportId}/annex-tables`),
+  getCognitiveProfile: (reportId: string) =>
+    apiFetch<CognitiveProfileDomain[]>(`/reports/${reportId}/cognitive-profile`),
 
   // Rules engine — generate sections
   generateSections: (reportId: string, sections: string[]) =>
@@ -364,6 +366,14 @@ export interface QuestionnaireRow {
   testCode: string; testName: string;
   slotKey: string; slotName: string;
   rawScore: number | null; classification: string | null;
+}
+
+export interface CognitiveProfileDomain {
+  domainCode: string;
+  domainName: string;
+  axis: number | null;
+  avgScore: number;
+  descriptorLabel: string;
 }
 
 export interface AiDraftSection {

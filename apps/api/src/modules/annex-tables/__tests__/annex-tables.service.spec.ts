@@ -87,3 +87,65 @@ describe('AnnexTablesService', () => {
     expect(result.wechslerIndices[0].standardScore).toBeNull();
   });
 });
+
+describe('AnnexTablesService — getCognitiveProfile', () => {
+  const domain = { id: 'dom1', code: 'INTELIGENCIA', name: 'Inteligencia', axis: 1, orderIndex: 0 };
+
+  function makeProfilePrisma(descriptor: string | null = 'Medio') {
+    return {
+      report: {
+        findUnique: jest.fn().mockResolvedValue({
+          frameworkCode: 'SNP_CHC',
+          selectedTests: ['WISC-V'],
+          testResults: [
+            {
+              id: 'tr1', descriptor,
+              test: { code: 'WISC-V', type: 'intelligence', domain },
+            },
+          ],
+        }),
+      },
+    };
+  }
+
+  it('returns domain scores aggregated from test results', async () => {
+    const prisma = makeProfilePrisma('Medio');
+    const service = new AnnexTablesService(prisma as any, mockReportsService as any);
+    const result = await service.getCognitiveProfile('rep1', USER);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ domainCode: 'INTELIGENCIA', avgScore: 4, descriptorLabel: 'Promedio' });
+  });
+
+  it('maps descriptor labels to correct numeric scores', async () => {
+    for (const [label, expectedScore] of [
+      ['Muy bajo', 1], ['Limítrofe', 2], ['Medio', 4], ['Medio alto', 5], ['Muy alto', 7],
+    ] as [string, number][]) {
+      const prisma = makeProfilePrisma(label);
+      const service = new AnnexTablesService(prisma as any, mockReportsService as any);
+      const result = await service.getCognitiveProfile('rep1', USER);
+      expect(result[0].avgScore).toBe(expectedScore);
+    }
+  });
+
+  it('returns empty array when no test results with descriptors', async () => {
+    const prisma = makeProfilePrisma(null);
+    const service = new AnnexTablesService(prisma as any, mockReportsService as any);
+    const result = await service.getCognitiveProfile('rep1', USER);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes questionnaire tests from profile', async () => {
+    const prisma = {
+      report: {
+        findUnique: jest.fn().mockResolvedValue({
+          frameworkCode: 'SNP_CHC',
+          selectedTests: ['BAI'],
+          testResults: [{ id: 'tr1', descriptor: 'Clínicamente significativo', test: { code: 'BAI', type: 'questionnaire', domain } }],
+        }),
+      },
+    };
+    const service = new AnnexTablesService(prisma as any, mockReportsService as any);
+    const result = await service.getCognitiveProfile('rep1', USER);
+    expect(result).toHaveLength(0);
+  });
+});
