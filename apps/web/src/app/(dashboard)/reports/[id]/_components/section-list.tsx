@@ -20,6 +20,10 @@ const SECTION_ROUTE: Record<string, string> = {
   BACKGROUND: 'interview',
   OBSERVED_BEHAVIOR: 'observation',
   CONCLUSIONS: 'conclusions',
+  COGNITIVE_EVALUATION: 'evaluation',
+  QUESTIONNAIRE_SYMPTOMS: 'evaluation',
+  SOCIAL_COGNITION: 'evaluation',
+  RESULTS_SYNTHESIS: 'evaluation',
 };
 
 const STATUS_COLOR: Record<string, string> = {

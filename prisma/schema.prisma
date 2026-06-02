@@ -270,6 +270,8 @@ model TestResult {
 
   report Report        @relation(fields: [reportId], references: [id])
   test   CognitiveTest @relation(fields: [testId], references: [id])
+
+  @@unique([reportId, testId])
 }
 
 // ─── Descriptor Scales ────────────────────────────────────────────────────────

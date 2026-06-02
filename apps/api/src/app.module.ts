@@ -12,6 +12,9 @@ import { DescriptorScalesModule } from './modules/descriptor-scales/descriptor-s
 import { TestScoreSlotsModule } from './modules/test-score-slots/test-score-slots.module';
 import { NormativeTablesModule } from './modules/normative-tables/normative-tables.module';
 import { RulesEngineModule } from './modules/rules-engine/rules-engine.module';
+import { EvaluationModule } from './modules/evaluation/evaluation.module';
+import { ScorePdfsModule } from './modules/score-pdfs/score-pdfs.module';
+import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { RulesEngineModule } from './modules/rules-engine/rules-engine.module';
     TestScoreSlotsModule,
     NormativeTablesModule,
     RulesEngineModule,
+    EvaluationModule,
+    ScorePdfsModule,
+    AnnexTablesModule,
   ],
 })
 export class AppModule {}

@@ -91,6 +91,47 @@ export const apiClient = {
     const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
     return apiFetch<DiagnosticCode[]>(`/diagnostic-codes${qs}`);
   },
+
+  // Evaluation — score entry
+  getTestResults: (reportId: string) =>
+    apiFetch<TestResultData[]>(`/reports/${reportId}/test-results`),
+  upsertTestScores: (reportId: string, testId: string, scores: Record<string, number | null>) =>
+    apiFetch<TestResultData>(`/reports/${reportId}/test-results/${testId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ scores }),
+    }),
+
+  // Score PDFs
+  getScorePdfs: (reportId: string) =>
+    apiFetch<ScorePdfData[]>(`/reports/${reportId}/score-pdfs`),
+  uploadScorePdf: async (reportId: string, file: File) => {
+    const authHeader = await getAuthHeader();
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_URL}/reports/${reportId}/score-pdfs`, {
+      method: 'POST',
+      headers: authHeader,
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.message ?? `API error ${res.status}`);
+    }
+    return res.json() as Promise<ScorePdfData>;
+  },
+  deleteScorePdf: (reportId: string, pdfId: string) =>
+    apiFetch<{ deleted: boolean }>(`/reports/${reportId}/score-pdfs/${pdfId}`, { method: 'DELETE' }),
+
+  // Annex tables
+  getAnnexTables: (reportId: string) =>
+    apiFetch<AnnexTablesData>(`/reports/${reportId}/annex-tables`),
+
+  // Rules engine — generate sections
+  generateSections: (reportId: string, sections: string[]) =>
+    apiFetch<Record<string, string>>(`/reports/${reportId}/generate-sections`, {
+      method: 'POST',
+      body: JSON.stringify({ sections }),
+    }),
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -138,6 +179,9 @@ export interface ReportSummary {
 export interface ReportDetail extends ReportSummary {
   supervisorId?: string;
   sections: SectionSummary[];
+  selectedTests: string[];
+  omitCit: boolean;
+  consultationReason?: string;
 }
 
 export interface SectionSummary {
@@ -246,4 +290,77 @@ export interface UpsertConclusionInput {
   includeEmotionalNote?: boolean;
   closingNote?: string;
   hypotheses?: HypothesisData[];
+}
+
+// ─── Evaluation types ─────────────────────────────────────────────────────────
+
+export interface ScoreSlotData {
+  id: string;
+  key: string;
+  name: string;
+  scoreType: string;
+  requiresConversion: boolean;
+  isInverse: boolean;
+  cutoffBorderline: number | null;
+  cutoffClinicallySignificant: number | null;
+  orderIndex: number;
+}
+
+export interface TestResultData {
+  id: string;
+  testId: string;
+  scores: Record<string, number | null>;
+  rawScore: number | null;
+  standardScore: number | null;
+  scoreType: string | null;
+  percentile: number | null;
+  descriptor: string | null;
+  test: {
+    id: string;
+    code: string;
+    name: string;
+    type: string;
+    scoreSlots: ScoreSlotData[];
+  };
+}
+
+export interface ScorePdfData {
+  id: string;
+  reportId: string;
+  source: string;
+  pdfHash: string;
+  pdfPath: string;
+  rawExtractedData: { originalName?: string } | null;
+  createdAt: string;
+}
+
+export interface WechslerIndexRow {
+  testCode: string; testName: string;
+  slotKey: string; slotName: string;
+  standardScore: number | null; percentile: number | null; descriptor: string | null;
+}
+
+export interface WechslerSubtestRow {
+  testCode: string; testName: string;
+  slotKey: string; slotName: string;
+  scaledScore: number | null; descriptor: string | null;
+}
+
+export interface BatteryRow {
+  testCode: string; testName: string;
+  slotKey: string; slotName: string;
+  score: number | null; scoreType: string; percentile: number | null; descriptor: string | null;
+}
+
+export interface QuestionnaireRow {
+  testCode: string; testName: string;
+  slotKey: string; slotName: string;
+  rawScore: number | null; classification: string | null;
+}
+
+export interface AnnexTablesData {
+  wechslerIndices: WechslerIndexRow[];
+  wechslerSubtests: WechslerSubtestRow[];
+  battery: BatteryRow[];
+  questionnaires: QuestionnaireRow[];
 }
