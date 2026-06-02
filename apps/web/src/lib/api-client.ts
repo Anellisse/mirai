@@ -52,12 +52,12 @@ export const apiClient = {
   transitionReport: (id: string, action: string) =>
     apiFetch(`/reports/${id}/transition`, { method: 'POST', body: JSON.stringify({ action }) }),
   saveSection: (reportId: string, sectionType: string, content: string) =>
-    apiFetch(`/reports/${reportId}/sections/${sectionType}`, {
+    apiFetch<SectionSummary>(`/reports/${reportId}/sections/${sectionType}`, {
       method: 'PATCH',
       body: JSON.stringify({ content }),
     }),
   approveSection: (reportId: string, sectionType: string) =>
-    apiFetch(`/reports/${reportId}/sections/${sectionType}/approve`, { method: 'POST' }),
+    apiFetch<SectionSummary>(`/reports/${reportId}/sections/${sectionType}/approve`, { method: 'POST' }),
 
   // Interview
   getInterview: (reportId: string) =>
@@ -132,6 +132,12 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ sections }),
     }),
+
+  // AI — generate drafts
+  generateBackground: (reportId: string) =>
+    apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-background`, { method: 'POST' }),
+  generateObservation: (reportId: string) =>
+    apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-observation`, { method: 'POST' }),
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -189,7 +195,9 @@ export interface SectionSummary {
   sectionType: string;
   status: string;
   generatedBy: string;
-  content?: string;
+  content?: string | null;
+  aiRawOutput?: string | null;
+  clinicianEdited?: boolean;
 }
 
 export interface CreateReportInput {
@@ -356,6 +364,16 @@ export interface QuestionnaireRow {
   testCode: string; testName: string;
   slotKey: string; slotName: string;
   rawScore: number | null; classification: string | null;
+}
+
+export interface AiDraftSection {
+  id: string;
+  sectionType: string;
+  status: 'PENDING' | 'AI_GENERATED' | 'CLINICIAN_REVIEWING' | 'APPROVED';
+  content: string | null;
+  aiRawOutput: string | null;
+  generatedBy: string;
+  clinicianEdited: boolean;
 }
 
 export interface AnnexTablesData {

@@ -15,6 +15,7 @@ import { RulesEngineModule } from './modules/rules-engine/rules-engine.module';
 import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { ScorePdfsModule } from './modules/score-pdfs/score-pdfs.module';
 import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
     EvaluationModule,
     ScorePdfsModule,
     AnnexTablesModule,
+    AiModule,
   ],
 })
 export class AppModule {}
