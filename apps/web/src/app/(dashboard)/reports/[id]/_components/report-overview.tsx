@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ReportDetail } from '@/lib/api-client';
 import { SectionList } from './section-list';
 import { TransitionButton } from './transition-button';
+import { ExportButton } from './export-button';
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: 'Borrador',
@@ -25,7 +26,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 interface ActionConfig { action: string; label: string }
 
-function getAvailableActions(status: string): ActionConfig[] {
+function getTransitionActions(status: string): ActionConfig[] {
   const map: Record<string, ActionConfig[]> = {
     DRAFT: [{ action: 'start', label: 'Iniciar redacción' }],
     IN_PROGRESS: [{ action: 'submit', label: 'Enviar a revisión' }],
@@ -34,14 +35,12 @@ function getAvailableActions(status: string): ActionConfig[] {
       { action: 'approve', label: 'Aprobar' },
     ],
     SUPERVISOR_REVIEW: [{ action: 'approve', label: 'Aprobar' }],
-    APPROVED: [{ action: 'export', label: 'Exportar' }],
-    EXPORTED: [{ action: 'finalize', label: 'Finalizar' }],
   };
   return map[status] ?? [];
 }
 
 export function ReportOverview({ report }: { report: ReportDetail }) {
-  const actions = getAvailableActions(report.status);
+  const transitionActions = getTransitionActions(report.status);
 
   return (
     <div>
@@ -53,9 +52,20 @@ export function ReportOverview({ report }: { report: ReportDetail }) {
       </div>
 
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        {actions.map((a) => (
+        {transitionActions.map((a) => (
           <TransitionButton key={a.action} reportId={report.id} action={a.action} label={a.label} />
         ))}
+        {report.status === 'APPROVED' && (
+          <ExportButton reportId={report.id} />
+        )}
+        {report.status === 'EXPORTED' && (
+          <Link
+            href={`/reports/${report.id}/finalize`}
+            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700"
+          >
+            Finalizar informe
+          </Link>
+        )}
         <Link
           href={`/reports/${report.id}/evaluation`}
           className="border border-blue-300 text-blue-700 hover:bg-blue-50 px-4 py-1.5 rounded-md text-sm font-medium"
