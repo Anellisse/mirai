@@ -16,6 +16,8 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { ScorePdfsModule } from './modules/score-pdfs/score-pdfs.module';
 import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ExportModule } from './modules/export/export.module';
+import { FinalizeModule } from './modules/finalize/finalize.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { AiModule } from './modules/ai/ai.module';
     ScorePdfsModule,
     AnnexTablesModule,
     AiModule,
+    ExportModule,
+    FinalizeModule,
   ],
 })
 export class AppModule {}
