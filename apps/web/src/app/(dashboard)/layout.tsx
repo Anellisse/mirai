@@ -1,7 +1,10 @@
 import { requireAuth } from '@/lib/session';
+import { apiClient } from '@/lib/api-client';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAuth();
+  const me = await apiClient.getMe().catch(() => null);
+  const isAdmin = me?.role === 'ADMIN' || me?.role === 'SUPER_ADMIN';
 
   return (
     <div className="min-h-screen flex">
@@ -20,6 +23,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <a href="/repository" className="block px-3 py-2 rounded-lg text-sm hover:bg-brand-500 transition">
             Repositorio
           </a>
+          {isAdmin && (
+            <>
+              <p className="text-brand-300 text-xs font-semibold uppercase tracking-wider px-3 pt-4 pb-1">
+                Admin
+              </p>
+              <a
+                href="/admin/access-requests"
+                className="block px-3 py-2 rounded-lg text-sm hover:bg-brand-500 transition"
+              >
+                Solicitudes de acceso
+              </a>
+              <a
+                href="/admin/audit-log"
+                className="block px-3 py-2 rounded-lg text-sm hover:bg-brand-500 transition"
+              >
+                Log de auditoría
+              </a>
+            </>
+          )}
         </nav>
         <div className="p-4 border-t border-brand-600 text-xs text-brand-200">
           {session.user?.email}
