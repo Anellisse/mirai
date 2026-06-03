@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { Verify2faDto } from './dto/verify-2fa.dto';
@@ -12,6 +12,17 @@ import { RolesGuard } from './guards/roles.guard';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  me(@CurrentUser() user: UserPayload) {
+    return {
+      id: user.sub,
+      email: user.email,
+      role: user.role,
+      organizationId: user.organizationId,
+    };
+  }
 
   @Post('register')
   @UseGuards(JwtAuthGuard, RolesGuard)

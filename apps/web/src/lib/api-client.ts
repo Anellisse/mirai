@@ -184,6 +184,34 @@ export const apiClient = {
     }
     return res.json() as Promise<FinalReportData>;
   },
+
+  // Auth — current user
+  getMe: () => apiFetch<CurrentUserData>('/auth/me'),
+
+  // Repository
+  getRepositoryReports: () => apiFetch<RepositoryReportItem[]>('/repository/reports'),
+
+  // Access Control
+  createAccessRequest: (reportId: string, reason: string) =>
+    apiFetch(`/reports/${reportId}/access-requests`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  getAccessRequests: () => apiFetch<AccessRequestItem[]>('/access-requests'),
+  approveAccessRequest: (requestId: string, duration: 'permanent' | '24h' | '48h') =>
+    apiFetch(`/access-requests/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ duration }),
+    }),
+  rejectAccessRequest: (requestId: string, reason: string) =>
+    apiFetch(`/access-requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
+  // Audit
+  getAuditLogs: (page = 1) =>
+    apiFetch<{ data: AuditLogItem[]; total: number; page: number }>(`/audit-logs?page=${page}`),
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -445,4 +473,46 @@ export interface FinalReportData {
   signature: string;
   version: number;
   finalizedAt: string;
+}
+
+export interface CurrentUserData {
+  id: string;
+  email: string;
+  role: string;
+  organizationId: string;
+}
+
+export interface RepositoryReportItem {
+  id: string;
+  status: string;
+  frameworkCode: string;
+  createdAt: string;
+  author: { name: string; title: string | null };
+  patientName: string;
+  isOwn: boolean;
+  hasAccess: boolean;
+  pendingRequest: boolean;
+}
+
+export interface AccessRequestItem {
+  id: string;
+  status: string;
+  reason: string;
+  rejectionReason: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+  requester: { name: string; email: string };
+  reviewedBy: { name: string } | null;
+  report: { patient: { name: string } } | null;
+  grant: { expiresAt: string | null } | null;
+}
+
+export interface AuditLogItem {
+  id: string;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  user: { name: string; email: string } | null;
 }
