@@ -18,6 +18,9 @@ import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ExportModule } from './modules/export/export.module';
 import { FinalizeModule } from './modules/finalize/finalize.module';
+import { RepositoryModule } from './modules/repository/repository.module';
+import { AccessControlModule } from './modules/access-control/access-control.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -40,6 +43,9 @@ import { FinalizeModule } from './modules/finalize/finalize.module';
     AiModule,
     ExportModule,
     FinalizeModule,
+    RepositoryModule,
+    AccessControlModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
