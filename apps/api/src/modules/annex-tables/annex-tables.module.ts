@@ -8,5 +8,6 @@ import { AnnexTablesService } from './annex-tables.service';
   imports: [ReportsModule],
   controllers: [AnnexTablesController],
   providers: [AnnexTablesService, PrismaService],
+  exports: [AnnexTablesService],
 })
 export class AnnexTablesModule {}
