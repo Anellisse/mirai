@@ -1,0 +1,13 @@
+node_modules
+.git
+.gitignore
+*.env
+.env
+.env.local
+.env.prod
+dist
+coverage
+.DS_Store
+.vscode
+storage
+docs/superpowers
