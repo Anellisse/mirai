@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { Verify2faDto } from './dto/verify-2fa.dto';
@@ -33,11 +34,13 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(AuthGuard('local'))
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   login(@Request() req: { user: any }) {
     return this.authService.login(req.user);
   }
 
   @Post('2fa/verify')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   verify2fa(@Body() dto: Verify2faDto) {
     return this.authService.verifyTwoFactor(dto.tempToken, dto.token);
   }

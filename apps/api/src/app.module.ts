@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { EncryptionModule } from './modules/encryption/encryption.module';
 import { PatientsModule } from './modules/patients/patients.module';
@@ -25,6 +27,13 @@ import { AuditModule } from './modules/audit/audit.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     EncryptionModule,
     AuthModule,
     PatientsModule,
@@ -46,6 +55,12 @@ import { AuditModule } from './modules/audit/audit.module';
     RepositoryModule,
     AccessControlModule,
     AuditModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
