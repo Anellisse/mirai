@@ -46,3 +46,99 @@
 - Email: admin@neuropsia.cl
 - Password: ChangeMeNow2024!
 - **Change immediately after first login.**
+
+---
+
+## Despliegue en producción (Ubuntu/Debian + Docker)
+
+### Prerrequisitos del servidor
+
+- Docker Engine + Docker Compose plugin instalados
+- Dominio apuntando al servidor (DNS propagado)
+- Puertos 80 y 443 abiertos en el firewall
+- `gpg` instalado (`sudo apt install gpg`)
+- `certbot` instalado (`sudo apt install certbot`)
+
+### Primera vez
+
+**1. Clonar el repositorio:**
+```bash
+git clone <repo-url> /opt/mirai
+cd /opt/mirai
+```
+
+**2. Crear archivo de secretos de producción:**
+```bash
+cp docker/.env.prod.example .env.prod
+nano .env.prod   # completar todos los valores CAMBIAR_*
+```
+
+Generar secretos:
+```bash
+openssl rand -hex 32  # usar para JWT_SECRET, JWT_REFRESH_SECRET, RUT_HMAC_SECRET, ENCRYPTION_KEY
+```
+
+**3. Emitir certificado TLS (antes de levantar Nginx con SSL):**
+```bash
+# Levantar Nginx solo en HTTP para el challenge de Certbot
+docker compose -f docker/docker-compose.prod.yml up -d nginx
+
+certbot certonly --webroot -w /var/www/certbot -d mirai.neuropsia.cl
+
+# Detener Nginx temporalmente
+docker compose -f docker/docker-compose.prod.yml stop nginx
+```
+
+> Actualizar `server_name` y rutas de certificados en `docker/nginx/nginx.conf` con el dominio real.
+
+**4. Levantar el stack completo:**
+```bash
+docker compose -f docker/docker-compose.prod.yml up -d --build
+```
+
+**5. Ejecutar migraciones:**
+```bash
+docker exec mirai-api npx prisma migrate deploy
+docker exec mirai-api npx prisma db seed
+```
+
+**6. Verificar que todo funciona:**
+```bash
+docker compose -f docker/docker-compose.prod.yml ps
+curl -I https://mirai.neuropsia.cl/api/health  # debe devolver 404 (no hay endpoint /health, pero TLS funciona)
+```
+
+### Backups automáticos
+
+Registrar el cron job en el servidor (como el usuario que corre Docker):
+```bash
+crontab -e
+```
+
+Agregar:
+```
+0 2 * * * /opt/mirai/docker/backup.sh >> /opt/mirai/backups/backup.log 2>&1
+```
+
+El backup se ejecuta diariamente a las 2 AM. Los archivos `.gpg` se guardan en `/opt/mirai/backups/` y se limpian automáticamente después de 30 días.
+
+**Restaurar un backup:**
+```bash
+/opt/mirai/docker/restore.sh /opt/mirai/backups/mirai_2026-06-03_02-00.sql.gz.gpg
+```
+
+### Renovación automática de TLS
+
+Agregar al cron (certbot renueva solo si faltan < 30 días):
+```
+0 3 * * * certbot renew --quiet && docker compose -f /opt/mirai/docker/docker-compose.prod.yml restart nginx
+```
+
+### Actualizar la aplicación
+
+```bash
+cd /opt/mirai
+git pull
+docker compose -f docker/docker-compose.prod.yml up -d --build
+docker exec mirai-api npx prisma migrate deploy
+```
