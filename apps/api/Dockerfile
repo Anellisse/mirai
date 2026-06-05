@@ -14,6 +14,7 @@ COPY apps/api/ apps/api/
 COPY prisma/ prisma/
 
 RUN pnpm install --frozen-lockfile --filter @mirai/api...
+RUN pnpm exec prisma generate
 RUN pnpm --filter @mirai/api build
 
 # ── runner ────────────────────────────────────────────────────────────────────
