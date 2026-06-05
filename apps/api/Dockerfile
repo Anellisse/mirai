@@ -8,6 +8,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
 COPY packages/shared-types/ packages/shared-types/
 COPY apps/api/ apps/api/
 COPY prisma/ prisma/
