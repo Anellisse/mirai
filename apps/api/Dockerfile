@@ -33,6 +33,7 @@ COPY prisma/ prisma/
 RUN pnpm install --frozen-lockfile --filter @mirai/api... --prod
 
 COPY --from=builder /app/apps/api/dist apps/api/dist
+COPY --from=builder /app/packages/shared-types/dist packages/shared-types/dist
 COPY --from=builder /app/prisma/seed-bundle.js prisma/seed-bundle.js
 
 WORKDIR /app/apps/api
