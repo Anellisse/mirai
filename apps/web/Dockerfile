@@ -8,6 +8,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
 COPY packages/shared-types/ packages/shared-types/
 COPY apps/web/ apps/web/
 
@@ -26,7 +27,7 @@ COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile --filter @mirai/web... --prod
 
 COPY --from=builder /app/apps/web/.next apps/web/.next
-COPY --from=builder /app/apps/web/next.config.ts apps/web/next.config.ts
+COPY --from=builder /app/apps/web/next.config.mjs apps/web/next.config.mjs
 
 WORKDIR /app/apps/web
 EXPOSE 3000
