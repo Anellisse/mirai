@@ -32,4 +32,4 @@ COPY --from=builder /app/apps/api/dist apps/api/dist
 
 WORKDIR /app/apps/api
 EXPOSE 3001
-CMD ["node", "dist/main"]
+CMD ["node", "dist/apps/api/src/main"]
