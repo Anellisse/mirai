@@ -20,6 +20,7 @@ RUN pnpm --filter @mirai/api build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared-types/ packages/shared-types/
