@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { FRAMEWORKS } from '../../packages/clinical-constants/src';
+import { FRAMEWORKS } from '@mirai/clinical-constants';
 
 export async function seedFrameworks(prisma: PrismaClient) {
   for (const fw of FRAMEWORKS) {

@@ -12,8 +12,12 @@
     "db:seed": "tsx prisma/seed/index.ts",
     "db:studio": "prisma studio --schema=prisma/schema.prisma"
   },
+  "prisma": {
+    "seed": "node prisma/seed-bundle.js"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "esbuild": "^0.21.0",
     "prisma": "^5.14.0",
     "tsx": "^4.11.0",
     "turbo": "^2.0.0",
