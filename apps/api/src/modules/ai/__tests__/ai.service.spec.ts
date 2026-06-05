@@ -1,20 +1,20 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { Role, UserPayload } from '@mirai/shared-types';
 
-// Mock Anthropic SDK before importing AiService
-const mockMessagesCreate = jest.fn().mockResolvedValue({
-  content: [{ type: 'text', text: 'Borrador clínico generado por IA.' }],
+// Mock OpenAI SDK before importing AiService
+const mockChatCompletionsCreate = jest.fn().mockResolvedValue({
+  choices: [{ message: { content: 'Borrador clínico generado por IA.' } }],
 });
-const MockAnthropic = jest.fn().mockImplementation(() => ({
-  messages: { create: mockMessagesCreate },
+const MockOpenAI = jest.fn().mockImplementation(() => ({
+  chat: { completions: { create: mockChatCompletionsCreate } },
 }));
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   __esModule: true,
-  default: MockAnthropic,
+  default: MockOpenAI,
 }));
 
 // Ensure API key is set before module loads
-process.env.ANTHROPIC_API_KEY = 'test-key';
+process.env.DEEPSEEK_API_KEY = 'test-key';
 
 import { AiService } from '../ai.service';
 
@@ -78,12 +78,12 @@ describe('AiService', () => {
       expect(mockReportsService.checkEditAccess).toHaveBeenCalledWith('rep1', USER);
     });
 
-    it('calls Claude with structured interview data and saves AI_GENERATED section', async () => {
+    it('calls DeepSeek with structured interview data and saves AI_GENERATED section', async () => {
       const prisma = makePrisma();
       const service = new AiService(prisma as any, mockReportsService as any);
       const result = await service.generateBackground('rep1', USER);
-      expect(mockMessagesCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ model: 'claude-sonnet-4-6', max_tokens: 2048 }),
+      expect(mockChatCompletionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'deepseek-chat', max_tokens: 2048 }),
       );
       expect(prisma.reportSection.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -131,7 +131,7 @@ describe('AiService', () => {
   });
 
   describe('generateObservation', () => {
-    it('calls Claude with observation checklist and saves AI_GENERATED section', async () => {
+    it('calls DeepSeek with observation checklist and saves AI_GENERATED section', async () => {
       const prisma = makePrisma();
       const service = new AiService(prisma as any, mockReportsService as any);
       await service.generateObservation('rep1', USER);
@@ -151,10 +151,10 @@ describe('AiService', () => {
 
   describe('initialization', () => {
     it('throws InternalServerErrorException when API key is missing', () => {
-      const savedKey = process.env.ANTHROPIC_API_KEY;
-      delete process.env.ANTHROPIC_API_KEY;
+      const savedKey = process.env.DEEPSEEK_API_KEY;
+      delete process.env.DEEPSEEK_API_KEY;
       expect(() => new AiService({} as any, {} as any)).toThrow(InternalServerErrorException);
-      process.env.ANTHROPIC_API_KEY = savedKey;
+      process.env.DEEPSEEK_API_KEY = savedKey;
     });
   });
 });

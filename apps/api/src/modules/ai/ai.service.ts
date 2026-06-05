@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { SectionStatus, SectionType } from '@prisma/client';
 import { UserPayload } from '@mirai/shared-types';
 import { PrismaService } from '../../prisma.service';
@@ -11,24 +11,27 @@ import {
   formatObservationForPrompt,
 } from './ai-prompts';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'deepseek-chat';
 const MAX_TOKENS = 2048;
 
 @Injectable()
 export class AiService {
-  private readonly client: Anthropic;
+  private readonly client: OpenAI;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly reportsService: ReportsService,
   ) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       throw new InternalServerErrorException(
-        'ANTHROPIC_API_KEY no está configurada. Contacte al administrador del sistema.',
+        'DEEPSEEK_API_KEY no está configurada. Contacte al administrador del sistema.',
       );
     }
-    this.client = new Anthropic({ apiKey });
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: 'https://api.deepseek.com',
+    });
   }
 
   async generateBackground(reportId: string, user: UserPayload) {
@@ -46,7 +49,7 @@ export class AiService {
     const formData = (interviewForm?.data ?? {}) as Record<string, unknown>;
     const userPrompt = formatInterviewForPrompt(formData, patientName);
 
-    const draft = await this.callClaude(BACKGROUND_SYSTEM_PROMPT, userPrompt);
+    const draft = await this.callAI(BACKGROUND_SYSTEM_PROMPT, userPrompt);
 
     return this.saveDraft(reportId, SectionType.BACKGROUND, draft, user.sub);
   }
@@ -66,30 +69,26 @@ export class AiService {
     const checklistData = (checklist?.data ?? {}) as Record<string, unknown>;
     const userPrompt = formatObservationForPrompt(checklistData, patientName);
 
-    const draft = await this.callClaude(OBSERVATION_SYSTEM_PROMPT, userPrompt);
+    const draft = await this.callAI(OBSERVATION_SYSTEM_PROMPT, userPrompt);
 
     return this.saveDraft(reportId, SectionType.OBSERVED_BEHAVIOR, draft, user.sub);
   }
 
-  private async callClaude(systemPrompt: string, userPrompt: string): Promise<string> {
-    const response = await this.client.messages.create({
+  private async callAI(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await this.client.chat.completions.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: 'text',
-          text: systemPrompt,
-          cache_control: { type: 'ephemeral' },
-        },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ],
-      messages: [{ role: 'user', content: userPrompt }],
     });
 
-    const block = response.content.find((b) => b.type === 'text');
-    if (!block || block.type !== 'text') {
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
       throw new InternalServerErrorException('La IA no devolvió texto.');
     }
-    return block.text.trim();
+    return content.trim();
   }
 
   private async saveDraft(reportId: string, sectionType: SectionType, draft: string, userId: string) {
@@ -98,7 +97,7 @@ export class AiService {
     });
 
     if (existing && existing.status === SectionStatus.APPROVED) {
-      return existing; // Never overwrite an approved section
+      return existing;
     }
 
     const data = {
