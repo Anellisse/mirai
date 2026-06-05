@@ -14,6 +14,7 @@ COPY apps/api/ apps/api/
 COPY prisma/ prisma/
 
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @mirai/shared-types build
 RUN pnpm --filter @mirai/clinical-constants build
 RUN pnpm --filter @mirai/api build
 RUN pnpm exec esbuild prisma/seed/index.ts --bundle --platform=node --outfile=prisma/seed-bundle.js --external:@prisma/client
