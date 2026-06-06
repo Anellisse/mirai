@@ -1,11 +1,28 @@
-import { auth } from './auth';
-
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
+// Server-side: API_URL (e.g. http://api:3001) + /api prefix (NestJS global prefix)
+// Browser-side: /api goes through Nginx to NestJS; /api/auth/session goes to Next.js
+const API_URL =
+  typeof window === 'undefined'
+    ? `${process.env.API_URL ?? 'http://localhost:3001'}/api`
+    : '/api';
 
 async function getAuthHeader(): Promise<Record<string, string>> {
-  const session = await auth();
-  const token = (session as any)?.accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  try {
+    let token: string | undefined;
+    if (typeof window === 'undefined') {
+      const { auth } = await import('./auth');
+      const session = await auth();
+      token = (session as any)?.accessToken;
+    } else {
+      const res = await fetch('/api/auth/session');
+      if (res.ok) {
+        const session = await res.json();
+        token = session?.accessToken;
+      }
+    }
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
 }
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

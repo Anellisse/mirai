@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api-client';
+import { createPatient } from '../actions';
 
 export function PatientForm() {
   const router = useRouter();
@@ -15,20 +15,13 @@ export function PatientForm() {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    try {
-      const patient = await apiClient.createPatient({
-        name: form.get('name') as string,
-        rut: (form.get('rut') as string) || undefined,
-        birthDate: (form.get('birthDate') as string) || undefined,
-        gender: (form.get('gender') as string) || undefined,
-        email: (form.get('email') as string) || undefined,
-        phone: (form.get('phone') as string) || undefined,
-      });
-      router.push(`/patients/${patient.id}`);
-    } catch (err: any) {
-      setError(err.message ?? 'Error al crear paciente');
-    } finally {
-      setLoading(false);
+    const result = await createPatient(form);
+    setLoading(false);
+
+    if ('error' in result) {
+      setError(result.error);
+    } else {
+      router.push(`/patients/${result.id}`);
     }
   }
 
