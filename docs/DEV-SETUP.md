@@ -78,34 +78,28 @@ Generar secretos:
 openssl rand -hex 32  # usar para JWT_SECRET, JWT_REFRESH_SECRET, RUT_HMAC_SECRET, ENCRYPTION_KEY
 ```
 
-**3. Emitir certificado TLS (antes de levantar Nginx con SSL):**
-```bash
-# Levantar Nginx solo en HTTP para el challenge de Certbot
-docker compose -f docker/docker-compose.prod.yml up -d nginx
+**3. Levantar el stack completo:**
 
-certbot certonly --webroot -w /var/www/certbot -d mirai.neuropsia.cl
+> El TLS lo maneja Cloudflare Tunnel externamente. No se necesita certbot.
 
-# Detener Nginx temporalmente
-docker compose -f docker/docker-compose.prod.yml stop nginx
-```
-
-> Actualizar `server_name` y rutas de certificados en `docker/nginx/nginx.conf` con el dominio real.
-
-**4. Levantar el stack completo:**
 ```bash
 docker compose -f docker/docker-compose.prod.yml up -d --build
 ```
 
-**5. Ejecutar migraciones:**
+**4. Ejecutar migraciones (primera vez):**
+
+> IMPORTANTE: usar `-w /app` — el schema de prisma está en `/app/prisma/`, no en el WORKDIR del contenedor.
+
 ```bash
-docker exec mirai-api npx prisma migrate deploy
-docker exec mirai-api npx prisma db seed
+docker exec -w /app mirai-api npx prisma migrate deploy
+docker exec -w /app mirai-api node prisma/seed-bundle.js
 ```
 
-**6. Verificar que todo funciona:**
+**5. Verificar que todo funciona:**
 ```bash
 docker compose -f docker/docker-compose.prod.yml ps
-curl -I https://mirai.neuropsia.cl/api/health  # debe devolver 404 (no hay endpoint /health, pero TLS funciona)
+curl -s http://localhost/api/auth/me  # debe devolver 401 (sin token — pero la API responde)
+curl -s http://localhost/            # debe devolver HTML del frontend
 ```
 
 ### Backups automáticos
@@ -140,5 +134,5 @@ Agregar al cron (certbot renueva solo si faltan < 30 días):
 cd /opt/mirai
 git pull
 docker compose -f docker/docker-compose.prod.yml up -d --build
-docker exec mirai-api npx prisma migrate deploy
+docker exec -w /app mirai-api npx prisma migrate deploy
 ```
