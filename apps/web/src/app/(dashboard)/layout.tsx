@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/session';
 import { apiClient } from '@/lib/api-client';
+import { SignOutButton } from './_components/sign-out-button';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAuth();
@@ -43,8 +44,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </>
           )}
         </nav>
-        <div className="p-4 border-t border-brand-600 text-xs text-brand-200">
-          {session.user?.email}
+        <div className="p-4 border-t border-brand-600 space-y-2">
+          <p className="text-xs text-brand-200">{session.user?.email}</p>
+          <SignOutButton />
         </div>
       </aside>
       <main className="flex-1 p-8">{children}</main>
