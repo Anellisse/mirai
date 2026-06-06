@@ -12,7 +12,7 @@ export default (auth as any)((req: any) => {
   }
 
   if (isLoggedIn && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/patients', req.url));
   }
 });
 
