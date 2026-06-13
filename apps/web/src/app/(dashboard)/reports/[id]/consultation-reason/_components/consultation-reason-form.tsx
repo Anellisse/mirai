@@ -37,22 +37,30 @@ const REASON_OPTIONS = [
 ];
 
 const PURPOSE_OPTIONS = [
-  'Diagnóstico diferencial',
+  'Evaluar la presencia de un diagnóstico diferencial',
+  'Dilucidar diagnóstico',
+  'Generar un perfil de fortalezas y debilidades',
   'Orientar estrategias de intervención',
+  'Entregar estrategias para planificación educativa',
+  'Evaluar capacidades laborales',
+  'Realizar una evaluación pericial o judicial',
+  'Realizar seguimiento de tratamiento y evolución',
   'Derivación a especialista',
-  'Planificación educativa (PIE u otro)',
-  'Evaluación de capacidades laborales',
-  'Peritaje / evaluación judicial',
-  'Seguimiento de tratamiento y evolución',
   'Otro',
 ];
 
 // ── Generación de texto ───────────────────────────────────────────────────────
 
-function joinList(items: string[]): string {
+function lowerReason(item: string): string {
+  // "Sospecha de X" → "la sospecha de X" para que quede bien tras "ante"
+  if (/^sospecha de /i.test(item)) return 'la ' + item.toLowerCase();
+  return item.toLowerCase();
+}
+
+function joinList(items: string[], transform = (s: string) => s.toLowerCase()): string {
   if (items.length === 0) return '';
-  if (items.length === 1) return items[0].toLowerCase();
-  return items.slice(0, -1).map(s => s.toLowerCase()).join(', ') + ' y ' + items[items.length - 1].toLowerCase();
+  if (items.length === 1) return transform(items[0]);
+  return items.slice(0, -1).map(transform).join(', ') + ' y ' + transform(items[items.length - 1]);
 }
 
 export interface CRData {
@@ -91,12 +99,12 @@ function generateText(d: CRData): string {
       quien = d.requesterOtherText || 'quien consulta'; break;
   }
 
-  // Razones
+  // Razones — usar lowerReason para "la sospecha de..."
   const reasonsList = [...d.reasons.filter(r => r !== 'Otro')];
   if (d.reasons.includes('Otro') && d.reasonOther) reasonsList.push(d.reasonOther);
-  const reasonsText = joinList(reasonsList);
+  const reasonsText = joinList(reasonsList, lowerReason);
 
-  // Propósitos
+  // Propósitos — ya vienen en forma verbal (Evaluar, Realizar, Orientar...)
   const purposesList = [...d.purposes.filter(p => p !== 'Otro')];
   if (d.purposes.includes('Otro') && d.purposeOther) purposesList.push(d.purposeOther);
   const purposesText = joinList(purposesList);
