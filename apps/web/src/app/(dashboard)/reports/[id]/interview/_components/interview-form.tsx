@@ -4,6 +4,24 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, InterviewData } from '@/lib/api-client';
 
+// ── Decodificación de campo (chip JSON → texto plano) ─────────────────────────
+function decodeField(raw: string): string {
+  if (!raw) return '';
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p?.selected)) {
+      const parts = (p.selected as string[]).join(', ');
+      const notes = (p.notes as string | undefined)?.trim() ?? '';
+      return [parts, notes].filter(Boolean).join('. ');
+    }
+    if (typeof p?.value === 'string') {
+      const notes = (p.notes as string | undefined)?.trim() ?? '';
+      return [p.value, notes].filter(Boolean).join('. ');
+    }
+  } catch {}
+  return raw;
+}
+
 // ── Codificación de campos estructurados ─────────────────────────────────────
 // Los campos con checkboxes/select se guardan como JSON para poder recargar
 // el estado. El prompt de IA los formatea a texto legible.
@@ -215,10 +233,66 @@ export function InterviewForm({ reportId, initial }: Props) {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  // PDF mode state
-  const [generating, setGenerating] = useState(false);
+  // PDF mode: datos como texto plano por campo
+  type PdfFields = Record<string, string>;
+  type PdfData = Record<string, PdfFields>;
+
+  function initPdfData(): PdfData {
+    // Inicializa desde los datos existentes decodificando chips → texto
+    const f = (s: string, k: string) => decodeField(field(s as S, k) ?? '');
+    return {
+      section2: {
+        householdMembers: f('section2', 'householdMembers'),
+        householdRelationType: (initial.section2 as any)?.householdRelationType ?? '',
+        primaryCaregivers: f('section2', 'primaryCaregivers'),
+        psychosocialContext: f('section2', 'psychosocialContext'),
+      },
+      section3: {
+        pregnancyAndBirth: f('section3', 'pregnancyAndBirth'),
+        psychomotorMilestones: f('section3', 'psychomotorMilestones'),
+        languageDevelopment: f('section3', 'languageDevelopment'),
+        sphincterControl: f('section3', 'sphincterControl'),
+      },
+      section4: {
+        childhoodBehavior: f('section4', 'childhoodBehavior'),
+        childhoodSymptoms: f('section4', 'childhoodSymptoms'),
+        emotionalRegulationChildhood: f('section4', 'emotionalRegulationChildhood'),
+        relationshipWithAuthority: f('section4', 'relationshipWithAuthority'),
+      },
+      section5: {
+        currentSymptomsDescription: f('section5', 'currentSymptomsDescription'),
+        dailyFunctioningImpact: f('section5', 'dailyFunctioningImpact'),
+        currentTreatments: f('section5', 'currentTreatments'),
+      },
+      section6: {
+        currentFriendships: f('section6', 'currentFriendships'),
+        currentSocialNetworks: f('section6', 'currentSocialNetworks'),
+        hobbiesAndInterests: f('section6', 'hobbiesAndInterests'),
+      },
+      section7: {
+        educationLevel: (initial.section7 as any)?.educationLevel ?? '',
+        receivedSupport: f('section7', 'receivedSupport'),
+        workSituation: (initial.section7 as any)?.workSituation ?? '',
+      },
+      section8: {
+        previousDiagnoses: f('section8', 'previousDiagnoses'),
+        currentMedication: (initial.section8 as any)?.currentMedication ?? '',
+        hospitalizationsTraumas: f('section8', 'hospitalizationsTraumas'),
+        previousEvaluations: f('section8', 'previousEvaluations'),
+        familyMedicalHistory: f('section8', 'familyMedicalHistory'),
+      },
+    };
+  }
+
+  const [pdfData, setPdfData] = useState<PdfData>(initPdfData);
+  const [extracting, setExtracting] = useState(false);
   const [pdfError, setPdfError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function updatePdf(section: string, fieldKey: string, value: string) {
+    setPdfData(prev => ({ ...prev, [section]: { ...(prev[section] ?? {}), [fieldKey]: value } }));
+    setSaved(false);
+  }
 
   function buildData(): InterviewData {
     return {
@@ -270,7 +344,8 @@ export function InterviewForm({ reportId, initial }: Props) {
   async function handleSave() {
     setSaving(true); setSaveError(''); setSaved(false);
     try {
-      await apiClient.upsertInterview(reportId, buildData());
+      const data = mode === 'pdf' ? pdfData as InterviewData : buildData();
+      await apiClient.upsertInterview(reportId, data);
       setSaved(true);
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : 'Error al guardar.');
@@ -280,16 +355,34 @@ export function InterviewForm({ reportId, initial }: Props) {
   }
 
   async function handlePdfUpload(file: File) {
-    setGenerating(true); setPdfError('');
+    setExtracting(true); setPdfError('');
     try {
-      // Genera el borrador IA directamente desde el PDF y guarda en la sección BACKGROUND
-      await apiClient.generateBackgroundFromPdf(reportId, file);
-      // Refresca la página para que AiDraftPanel muestre el texto generado
-      router.refresh();
+      const { extracted } = await apiClient.extractInterviewFromPdf(reportId, file);
+      // Poblar pdfData con el texto extraído (los valores vienen como strings planos)
+      const e = extracted as any;
+      const next: PdfData = { ...initPdfData() };
+      const sections: Array<[string, string[]]> = [
+        ['section2', ['householdMembers', 'householdRelationType', 'primaryCaregivers', 'psychosocialContext']],
+        ['section3', ['pregnancyAndBirth', 'psychomotorMilestones', 'languageDevelopment', 'sphincterControl']],
+        ['section4', ['childhoodBehavior', 'childhoodSymptoms', 'emotionalRegulationChildhood', 'relationshipWithAuthority']],
+        ['section5', ['currentSymptomsDescription', 'dailyFunctioningImpact', 'currentTreatments']],
+        ['section6', ['currentFriendships', 'currentSocialNetworks', 'hobbiesAndInterests']],
+        ['section7', ['educationLevel', 'receivedSupport', 'workSituation']],
+        ['section8', ['previousDiagnoses', 'currentMedication', 'hospitalizationsTraumas', 'previousEvaluations', 'familyMedicalHistory']],
+      ];
+      for (const [sec, fields] of sections) {
+        for (const f of fields) {
+          if (e[sec]?.[f]) {
+            next[sec] = { ...(next[sec] ?? {}), [f]: String(e[sec][f]) };
+          }
+        }
+      }
+      setPdfData(next);
+      setSaved(false);
     } catch (e: unknown) {
       setPdfError(e instanceof Error ? e.message : 'Error al procesar el PDF.');
     } finally {
-      setGenerating(false);
+      setExtracting(false);
     }
   }
 
@@ -331,33 +424,84 @@ export function InterviewForm({ reportId, initial }: Props) {
 
       {/* ── Modo PDF ───────────────────────────────────────────── */}
       {mode === 'pdf' && (
-        <div className="border rounded-lg p-6 space-y-4 bg-gray-50">
-          <p className="text-sm text-gray-700">
-            Suba la ficha de anamnesis en PDF. La IA leerá el documento y generará directamente
-            el borrador de <strong>Antecedentes relevantes</strong>, que aparecerá a continuación
-            para que lo revise y edite.
-          </p>
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-            El PDF debe contener texto seleccionable (no imágenes escaneadas).
-          </p>
-          <input
-            ref={fileRef} type="file" accept="application/pdf" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = ''; }}
-          />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={generating}
-            className="bg-brand-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-brand-700 disabled:opacity-50 w-full"
-          >
-            {generating ? 'Procesando con IA, espere…' : 'Seleccionar PDF y generar borrador'}
-          </button>
-          {pdfError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-md">{pdfError}</p>}
-          {generating && (
-            <p className="text-xs text-gray-400 text-center animate-pulse">
-              Extrayendo texto del PDF y generando la narrativa clínica…
+        <div className="space-y-5">
+          {/* Carga del PDF */}
+          <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+            <p className="text-sm text-gray-600">
+              Suba la ficha de anamnesis. La IA extraerá el texto y completará los campos a continuación
+              para que los revise y edite antes de guardar.
             </p>
-          )}
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
+              El PDF debe contener texto seleccionable (no imágenes escaneadas).
+            </p>
+            <input ref={fileRef} type="file" accept="application/pdf" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = ''; }} />
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting}
+              className="bg-brand-600 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
+              {extracting ? 'Extrayendo con IA…' : 'Seleccionar PDF'}
+            </button>
+            {pdfError && <p className="text-sm text-red-600">{pdfError}</p>}
+          </div>
+
+          {/* Textareas editables por sección */}
+          {([
+            ['section2', 'Contexto familiar', [
+              ['householdMembers', 'Composición del hogar'],
+              ['householdRelationType', 'Tipo de relación parental'],
+              ['primaryCaregivers', 'Cuidadores principales'],
+              ['psychosocialContext', 'Contexto psicosocial'],
+            ]],
+            ['section3', 'Historia del desarrollo', [
+              ['pregnancyAndBirth', 'Embarazo y nacimiento'],
+              ['psychomotorMilestones', 'Hitos psicomotores'],
+              ['languageDevelopment', 'Desarrollo del lenguaje'],
+              ['sphincterControl', 'Control de esfínteres'],
+            ]],
+            ['section4', 'Conducta y sintomatología en la infancia', [
+              ['childhoodBehavior', 'Conducta en la infancia'],
+              ['childhoodSymptoms', 'Sintomatología en la infancia'],
+              ['emotionalRegulationChildhood', 'Regulación emocional'],
+              ['relationshipWithAuthority', 'Relación con la autoridad'],
+            ]],
+            ['section5', 'Sintomatología actual', [
+              ['currentSymptomsDescription', 'Descripción de síntomas actuales'],
+              ['dailyFunctioningImpact', 'Impacto en el funcionamiento diario'],
+              ['currentTreatments', 'Tratamientos actuales'],
+            ]],
+            ['section6', 'Desarrollo social e intereses', [
+              ['currentFriendships', 'Vínculos de amistad'],
+              ['currentSocialNetworks', 'Redes de apoyo social'],
+              ['hobbiesAndInterests', 'Hobbies e intereses'],
+            ]],
+            ['section7', 'Historia escolar / laboral', [
+              ['educationLevel', 'Nivel educacional'],
+              ['receivedSupport', 'Apoyos recibidos'],
+              ['workSituation', 'Situación laboral'],
+            ]],
+            ['section8', 'Antecedentes médicos', [
+              ['previousDiagnoses', 'Diagnósticos previos'],
+              ['currentMedication', 'Medicación actual'],
+              ['hospitalizationsTraumas', 'Hospitalizaciones, cirugías, traumatismos'],
+              ['previousEvaluations', 'Evaluaciones previas'],
+              ['familyMedicalHistory', 'Antecedentes médicos familiares'],
+            ]],
+          ] as [string, string, [string, string][]][]).map(([secKey, title, fields]) => (
+            <section key={secKey} className="border rounded-lg p-5 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">{title}</h3>
+              {fields.map(([fKey, label]) => (
+                <div key={fKey}>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                  <textarea
+                    rows={2}
+                    className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand-400"
+                    value={pdfData[secKey]?.[fKey] ?? ''}
+                    onChange={e => updatePdf(secKey, fKey, e.target.value)}
+                    placeholder="Sin información…"
+                  />
+                </div>
+              ))}
+            </section>
+          ))}
         </div>
       )}
 
