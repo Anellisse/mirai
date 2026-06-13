@@ -82,6 +82,14 @@ describe('ProcedureService', () => {
       const service = new ProcedureService(makePrisma() as any, makeReportsService(new NotFoundException()) as any);
       await expect(service.getProcedure('bad', user)).rejects.toThrow(NotFoundException);
     });
+
+    it('calls checkEditAccess with reportId and user', async () => {
+      const prisma = makePrisma();
+      const rs = makeReportsService();
+      const service = new ProcedureService(prisma as any, rs as any);
+      await service.getProcedure('report-1', user);
+      expect(rs.checkEditAccess).toHaveBeenCalledWith('report-1', user);
+    });
   });
 
   describe('upsertProcedure', () => {
@@ -144,6 +152,25 @@ describe('ProcedureService', () => {
           data: expect.objectContaining({ action: 'SECTION_SAVED', resource: 'ReportSection' }),
         }),
       );
+    });
+
+    it('calls checkEditAccess with reportId and user', async () => {
+      const prisma = makePrisma();
+      const rs = makeReportsService();
+      const service = new ProcedureService(prisma as any, rs as any);
+      await service.upsertProcedure('report-1', baseDto, user);
+      expect(rs.checkEditAccess).toHaveBeenCalledWith('report-1', user);
+    });
+
+    it('throws NotFoundException when section not found', async () => {
+      const prisma = makePrisma({
+        reportSection: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          update: jest.fn(),
+        },
+      });
+      const service = new ProcedureService(prisma as any, makeReportsService() as any);
+      await expect(service.upsertProcedure('report-1', baseDto, user)).rejects.toThrow(NotFoundException);
     });
   });
 });
