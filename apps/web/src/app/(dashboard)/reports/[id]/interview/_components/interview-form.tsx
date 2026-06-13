@@ -49,11 +49,11 @@ export function InterviewForm({ reportId, initial }: Props) {
       const { extracted } = await apiClient.extractInterviewFromPdf(reportId, file);
       // Merge extracted data into form (overwrite only fields that have values)
       setData(prev => {
-        const merged = { ...prev };
+        const merged: InterviewData = { ...prev };
         for (const [sec, fields] of Object.entries(extracted)) {
           if (fields && typeof fields === 'object') {
-            merged[sec as SectionKey] = {
-              ...(prev[sec as SectionKey] as Record<string, unknown> ?? {}),
+            (merged as any)[sec] = {
+              ...((prev as any)[sec] ?? {}),
               ...(fields as Record<string, unknown>),
             };
           }
