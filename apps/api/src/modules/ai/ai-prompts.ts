@@ -33,11 +33,29 @@ REGLAS ESTRICTAS:
 - Genera párrafos coherentes y fluidos. No uses listas ni viñetas.
 - Extensión: entre 150 y 400 palabras.`;
 
+// Decodes a field that may be stored as JSON {selected, notes} or plain string
+function decodeField(raw: string): string {
+  if (!raw) return '';
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p?.selected)) {
+      const parts = (p.selected as string[]).join(', ');
+      const notes = (p.notes as string | undefined)?.trim() ?? '';
+      return [parts, notes].filter(Boolean).join('. ');
+    }
+    if (typeof p?.value === 'string') {
+      const notes = (p.notes as string | undefined)?.trim() ?? '';
+      return [p.value, notes].filter(Boolean).join('. ');
+    }
+  } catch {}
+  return raw;
+}
+
 // Converts interview form data to a human-readable prompt payload
 export function formatInterviewForPrompt(data: Record<string, unknown>, patientName: string): string {
   const get = (section: string, field: string): string => {
     const sec = data[section] as Record<string, string> | undefined;
-    return sec?.[field]?.trim() || '';
+    return decodeField(sec?.[field]?.trim() || '');
   };
 
   const lines: string[] = [`DATOS DEL PACIENTE: ${patientName}`, ''];
