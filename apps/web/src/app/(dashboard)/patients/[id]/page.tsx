@@ -43,8 +43,12 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
         rut={patient.rut}
         birthDate={patient.birthDate}
         gender={patient.gender}
-        email={patient.email}
-        phone={patient.phone}
+        laterality={patient.laterality}
+        interviewDate={patient.interviewDate}
+        schoolName={patient.schoolName}
+        schoolGrade={patient.schoolGrade}
+        currentInstitution={patient.currentInstitution}
+        occupation={patient.occupation}
       />
       <ReportList reports={patient.reports} patientId={patient.id} />
     </div>
