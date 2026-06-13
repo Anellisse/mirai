@@ -21,7 +21,7 @@ const SECTION_ROUTE: Record<string, string> = {
   OBSERVED_BEHAVIOR: 'observation',
   CONCLUSIONS: 'conclusions',
   CONSULTATION_REASON: 'consultation-reason',
-  PROCEDURE_TESTS: 'sections/PROCEDURE_TESTS',
+  PROCEDURE_TESTS: 'procedure',
   COGNITIVE_EVALUATION: 'sections/COGNITIVE_EVALUATION',
   QUESTIONNAIRE_SYMPTOMS: 'sections/QUESTIONNAIRE_SYMPTOMS',
   SOCIAL_COGNITION: 'sections/SOCIAL_COGNITION',
