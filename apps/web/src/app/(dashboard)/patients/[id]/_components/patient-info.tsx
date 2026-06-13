@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, PatientDetail } from '@/lib/api-client';
+import { RutInput } from '@/components/rut-input';
+import { formatRut } from '@/lib/rut';
 
 const GENDER_LABEL: Record<string, string> = { M: 'Masculino', F: 'Femenino', NB: 'No binario', O: 'Otro' };
 
@@ -36,7 +38,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
 
   // form state
   const [name, setName] = useState(patient.name);
-  const [rut, setRut] = useState(patient.rut ?? '');
+  const [rut, setRut] = useState(formatRut(patient.rut ?? ''));
   const [birthDate, setBirthDate] = useState(toDateInput(patient.birthDate));
   const [gender, setGender] = useState(patient.gender ?? '');
   const [laterality, setLaterality] = useState(patient.laterality ?? '');
@@ -62,9 +64,8 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
   const adult = ageYears !== null && ageYears >= 18;
 
   function cancelEdit() {
-    // reset to original values
     setName(patient.name);
-    setRut(patient.rut ?? '');
+    setRut(formatRut(patient.rut ?? ''));
     setBirthDate(toDateInput(patient.birthDate));
     setGender(patient.gender ?? '');
     setLaterality(patient.laterality ?? '');
@@ -173,7 +174,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
 
         <div>
           <label className={labelCls}>RUT</label>
-          <input value={rut} onChange={e => setRut(e.target.value)} placeholder="12.345.678-9" className={inputCls} />
+          <RutInput value={rut} onChange={setRut} className={inputCls} />
         </div>
 
         <div>

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPatient } from '../actions';
+import { RutInput } from '@/components/rut-input';
+import { formatRut } from '@/lib/rut';
 
 function calcAge(birthDateStr: string): { years: number; months: number } | null {
   if (!birthDateStr) return null;
@@ -31,6 +33,7 @@ export function PatientForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [birthDate, setBirthDate] = useState('');
+  const [rut, setRut] = useState('');
 
   const age = calcAge(birthDate);
   const isMinor = age !== null && age.years < 18;
@@ -40,7 +43,10 @@ export function PatientForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await createPatient(new FormData(e.currentTarget));
+    const fd = new FormData(e.currentTarget);
+    // Ensure the controlled RUT value is included (in case browser skips hidden updates)
+    fd.set('rut', rut);
+    const result = await createPatient(fd);
     setLoading(false);
     if ('error' in result) {
       setError(result.error);
@@ -53,19 +59,16 @@ export function PatientForm() {
     <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
       {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 px-3 py-2 rounded-md">{error}</p>}
 
-      {/* Nombre */}
       <div>
         <label className={labelCls}>Nombre completo *</label>
         <input name="name" required className={inputCls} placeholder="Ej: María González Pérez" />
       </div>
 
-      {/* RUT */}
       <div>
         <label className={labelCls}>RUT</label>
-        <input name="rut" className={inputCls} placeholder="12.345.678-9" />
+        <RutInput name="rut" value={rut} onChange={setRut} className={inputCls} />
       </div>
 
-      {/* Fecha de nacimiento + edad calculada */}
       <div>
         <label className={labelCls}>Fecha de nacimiento</label>
         <input
@@ -76,13 +79,10 @@ export function PatientForm() {
           onChange={(e) => setBirthDate(e.target.value)}
         />
         {age !== null && (
-          <p className="mt-1 text-sm font-medium text-brand-600">
-            {ageLabel(age)}
-          </p>
+          <p className="mt-1 text-sm font-medium text-brand-600">{ageLabel(age)}</p>
         )}
       </div>
 
-      {/* Género */}
       <div>
         <label className={labelCls}>Género</label>
         <select name="gender" className={inputCls}>
@@ -94,7 +94,6 @@ export function PatientForm() {
         </select>
       </div>
 
-      {/* Lateralidad */}
       <div>
         <label className={labelCls}>Lateralidad</label>
         <select name="laterality" className={inputCls}>
@@ -105,25 +104,19 @@ export function PatientForm() {
         </select>
       </div>
 
-      {/* Campos condicionales para menores */}
-      {(isMinor || birthDate === '') && (
-        <div className={`space-y-4 transition-all ${!isMinor && birthDate !== '' ? 'hidden' : ''}`}>
-          {isMinor && (
-            <>
-              <div>
-                <label className={labelCls}>Colegio</label>
-                <input name="schoolName" className={inputCls} placeholder="Nombre del establecimiento educacional" />
-              </div>
-              <div>
-                <label className={labelCls}>Curso</label>
-                <input name="schoolGrade" className={inputCls} placeholder="Ej: 3° básico, 1° medio" />
-              </div>
-            </>
-          )}
-        </div>
+      {isMinor && (
+        <>
+          <div>
+            <label className={labelCls}>Colegio</label>
+            <input name="schoolName" className={inputCls} placeholder="Nombre del establecimiento educacional" />
+          </div>
+          <div>
+            <label className={labelCls}>Curso</label>
+            <input name="schoolGrade" className={inputCls} placeholder="Ej: 3° básico, 1° medio" />
+          </div>
+        </>
       )}
 
-      {/* Campos condicionales para adultos */}
       {isAdult && (
         <>
           <div>
@@ -137,7 +130,6 @@ export function PatientForm() {
         </>
       )}
 
-      {/* Fecha de entrevista */}
       <div>
         <label className={labelCls}>Fecha de entrevista</label>
         <input name="interviewDate" type="date" className={inputCls} />
