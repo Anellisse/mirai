@@ -82,8 +82,6 @@ para población chilena.
 **Lista de tests neuropsicológicos:**
 - Siempre comienza con "Entrevista clínica."
 - Seguida de los tests seleccionados con `type != 'questionnaire'`, en el orden de `orderIndex` de `CognitiveTest`.
-- Si ADI-R está seleccionado y `adirModality === 'TELEPRESENCIAL'`, se agrega al final: "La Entrevista para el Diagnóstico del Autismo (ADI-R) fue aplicada de forma telepresencial."
-
 Formato: `"Fueron aplicadas: Entrevista clínica. [Nombre test 1]. [Nombre test 2]."`
 
 **Párrafo de cuestionarios** (solo si hay tests con `type === 'questionnaire'` en `selectedTests`):
@@ -173,7 +171,7 @@ Layout de dos columnas:
 **Columna izquierda — Instrumentos**
 - Checkboxes agrupados por dominio (inteligencia, cognitivo, cognición social, cuestionarios)
 - Pre-marcados con `selectedTests` actual del informe
-- Si ADI-R está marcado → aparece radio "Modalidad ADI-R: Presencial / Telepresencial"
+- Si ADI-R está marcado → aparece radio "Modalidad ADI-R: Presencial / Telepresencial" (solo afecta el procedimiento, no genera texto adicional en la lista de pruebas)
 
 **Columna derecha — Procedimiento**
 - Select "Entrevista con": Padres, Paciente, Ambos, No se realizó
@@ -221,7 +219,9 @@ Actualizar los 15 nombres a los nombres clínicos en español definidos en la ta
 
 ## 6. Tests
 
-- `procedure.service.spec.ts`: casos de generación de texto (todos los valores de `interviewWith`, cuestionarios sí/no, ADI-R telepresencial, paciente sin nombre de padres, sin tests cognitivos, etc.)
+- `procedure.service.spec.ts`: casos de generación de texto (todos los valores de `interviewWith`, cuestionarios sí/no, paciente sin padres, sin tests cognitivos, etc.)
+- Validación en el servicio: si `questionnairesShared === true` pero `selectedTests` no contiene ningún test de tipo `questionnaire` → error 400 "Debe seleccionar al menos un cuestionario para activar esta opción"
+- La misma validación en el frontend: el checkbox "Se compartieron cuestionarios" se deshabilita si no hay cuestionarios seleccionados; si el usuario desmarca todos los cuestionarios mientras el checkbox está activo, se desmarca automáticamente con un aviso.
 - No se requieren cambios de schema → no hay migración.
 
 ---
