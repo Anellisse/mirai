@@ -14,9 +14,23 @@ interface ReportWithSections {
   authorId: string;
   supervisorId: string | null;
   status: ReportStatus;
-  sections: Array<{ generatedBy: GeneratedBy; status: SectionStatus }>;
+  sections: Array<{ sectionType: string; generatedBy: GeneratedBy; status: SectionStatus; content: string | null }>;
   finalReport: { id: string } | null;
 }
+
+const REQUIRED_BEFORE_REVIEW = [
+  'CONSULTATION_REASON',
+  'BACKGROUND',
+  'OBSERVED_BEHAVIOR',
+  'CONCLUSIONS',
+] as const;
+
+const SECTION_LABEL: Record<string, string> = {
+  CONSULTATION_REASON: 'Motivo de consulta',
+  BACKGROUND: 'Antecedentes relevantes',
+  OBSERVED_BEHAVIOR: 'Conducta observada',
+  CONCLUSIONS: 'Conclusiones',
+};
 
 const SENIOR_OR_ABOVE: Role[] = [Role.CLINICO_SENIOR, Role.ADMIN, Role.SUPER_ADMIN];
 
@@ -38,6 +52,7 @@ export class ReportStateMachineService {
       case ReportStatus.IN_PROGRESS: {
         if (action !== 'submit') this.invalidTransition(report.status, action);
         if (!isAuthor) throw new ForbiddenException('Solo el autor puede enviar a revisión');
+        this.assertCoreSectionsFilled(report);
         this.assertNoUnreviewedAiSections(report);
         return ReportStatus.REVIEW;
       }
@@ -80,6 +95,19 @@ export class ReportStateMachineService {
 
       default:
         throw new ConflictException(`El informe en estado ${report.status} no admite transiciones`);
+    }
+  }
+
+  private assertCoreSectionsFilled(report: ReportWithSections): void {
+    const empty = REQUIRED_BEFORE_REVIEW.filter((type) => {
+      const section = report.sections.find((s) => s.sectionType === type);
+      return !section || section.status === SectionStatus.PENDING || !section.content;
+    });
+    if (empty.length > 0) {
+      const names = empty.map((t) => SECTION_LABEL[t] ?? t).join(', ');
+      throw new UnprocessableEntityException(
+        `No se puede enviar a revisión: faltan completar — ${names}`,
+      );
     }
   }
 

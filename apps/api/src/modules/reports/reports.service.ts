@@ -134,14 +134,8 @@ export class ReportsService {
     });
     if (!report) throw new NotFoundException('Informe no encontrado');
 
-    const editableStatuses: ReportStatus[] = [
-      ReportStatus.DRAFT,
-      ReportStatus.IN_PROGRESS,
-      ReportStatus.REVIEW,
-      ReportStatus.SUPERVISOR_REVIEW,
-    ];
-    if (!editableStatuses.includes(report.status))
-      throw new ForbiddenException('El informe no está en estado editable');
+    if (report.status === ReportStatus.FINAL)
+      throw new ForbiddenException('El informe está finalizado y no puede modificarse');
 
     const canEdit = report.authorId === user.sub || report.supervisorId === user.sub;
     if (!canEdit) throw new ForbiddenException('Sin permiso para editar secciones');
@@ -218,9 +212,8 @@ export class ReportsService {
     });
     if (!report) throw new NotFoundException('Informe no encontrado');
 
-    const locked = ['APPROVED', 'EXPORTED', 'FINAL'] as const;
-    if (locked.includes(report.status as any)) {
-      throw new ForbiddenException('El informe no puede ser modificado en su estado actual');
+    if (report.status === ReportStatus.FINAL) {
+      throw new ForbiddenException('El informe está finalizado y no puede modificarse');
     }
 
     const isAuthor = report.authorId === user.sub;
