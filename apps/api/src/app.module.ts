@@ -18,6 +18,7 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { ScorePdfsModule } from './modules/score-pdfs/score-pdfs.module';
 import { AnnexTablesModule } from './modules/annex-tables/annex-tables.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ProcedureModule } from './modules/procedure/procedure.module';
 import { ExportModule } from './modules/export/export.module';
 import { FinalizeModule } from './modules/finalize/finalize.module';
 import { RepositoryModule } from './modules/repository/repository.module';
@@ -50,6 +51,7 @@ import { AuditModule } from './modules/audit/audit.module';
     ScorePdfsModule,
     AnnexTablesModule,
     AiModule,
+    ProcedureModule,
     ExportModule,
     FinalizeModule,
     RepositoryModule,
