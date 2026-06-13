@@ -151,6 +151,67 @@ export function formatInterviewForPrompt(data: Record<string, unknown>, patientN
   return lines.join('\n');
 }
 
+// ── Extracción de ficha PDF ────────────────────────────────────────────────────
+
+export const PDF_INTERVIEW_EXTRACTION_SYSTEM_PROMPT = `Eres un asistente clínico especializado en neuropsicología. \
+Tu tarea es leer el texto extraído de una ficha de anamnesis clínica y organizar la información en un JSON estructurado.
+
+REGLAS:
+- Extrae SOLO información explícitamente presente en el texto. No inventes datos.
+- Si no hay información para un campo, omítelo del JSON (no lo incluyas con valor vacío).
+- El JSON debe ser válido y sin comentarios.
+- Responde ÚNICAMENTE con el JSON, sin texto adicional, sin markdown, sin triple backtick.
+
+El JSON debe tener esta estructura (incluye solo los campos que encontraste):
+{
+  "section2": {
+    "householdMembers": "composición del hogar (quiénes viven con el paciente)",
+    "householdRelationType": "biparental | monoparental | reconstituida | otro",
+    "primaryCaregivers": "cuidadores principales",
+    "psychosocialContext": "contexto psicosocial, factores de riesgo o protección"
+  },
+  "section3": {
+    "pregnancyAndBirth": "embarazo, parto, complicaciones perinatales",
+    "psychomotorMilestones": "hitos del desarrollo motor (gateo, marcha, etc.)",
+    "languageDevelopment": "desarrollo del lenguaje (primeras palabras, frases)",
+    "sphincterControl": "control de esfínteres"
+  },
+  "section4": {
+    "childhoodBehavior": "conducta en la infancia",
+    "childhoodSymptoms": "sintomatología en la infancia",
+    "emotionalRegulationChildhood": "regulación emocional en la infancia",
+    "relationshipWithAuthority": "relación con la autoridad (padres, docentes)"
+  },
+  "section5": {
+    "currentSymptomsDescription": "descripción de los síntomas actuales",
+    "dailyFunctioningImpact": "impacto en el funcionamiento diario",
+    "currentTreatments": "tratamientos o intervenciones actuales"
+  },
+  "section6": {
+    "currentFriendships": "vínculos de amistad actuales",
+    "currentSocialNetworks": "redes de apoyo social",
+    "hobbiesAndInterests": "intereses, hobbies, actividades recreativas"
+  },
+  "section7": {
+    "educationLevel": "nivel educacional, escolaridad actual o pasada",
+    "receivedSupport": "apoyos recibidos (PIE, psicopedagogía, fonoaudiología, etc.)",
+    "workSituation": "situación laboral (adultos)"
+  },
+  "section8": {
+    "previousDiagnoses": "diagnósticos previos",
+    "currentMedication": "medicación actual (nombre y dosis)",
+    "hospitalizationsTraumas": "hospitalizaciones, cirugías, traumatismos",
+    "previousEvaluations": "evaluaciones psicológicas o neuropsicológicas previas",
+    "familyMedicalHistory": "antecedentes médicos familiares relevantes"
+  }
+}`;
+
+export function buildPdfExtractionPrompt(pdfText: string): string {
+  return `A continuación está el texto extraído de una ficha de anamnesis clínica. Extrae la información y devuelve el JSON.\n\n---\n${pdfText.slice(0, 8000)}\n---`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const SCORE_LABELS: Record<number, string> = { 0: 'adecuado/sin dificultad', 1: 'levemente alterado', 2: 'significativamente alterado' };
 const NIVEL_ACTIVIDAD: Record<string, string> = { hipo: 'hipoactivo', normo: 'normoactivo', hiper: 'hiperactivo' };
 const EXPRESION_VERBAL: Record<string, string> = { fluida: 'fluida', reducida: 'reducida', excesiva: 'excesiva/verborreica' };

@@ -1,4 +1,6 @@
-import { Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { UserPayload } from '@mirai/shared-types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,5 +19,15 @@ export class AiController {
   @Post('generate-observation')
   generateObservation(@Param('id') reportId: string, @CurrentUser() user: UserPayload) {
     return this.service.generateObservation(reportId, user);
+  }
+
+  @Post('extract-interview-pdf')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  extractInterviewFromPdf(
+    @Param('id') reportId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.service.extractInterviewFromPdf(reportId, file.buffer, user);
   }
 }

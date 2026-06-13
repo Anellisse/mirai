@@ -7,6 +7,8 @@ import { ReportsService } from '../reports/reports.service';
 import {
   BACKGROUND_SYSTEM_PROMPT,
   OBSERVATION_SYSTEM_PROMPT,
+  PDF_INTERVIEW_EXTRACTION_SYSTEM_PROMPT,
+  buildPdfExtractionPrompt,
   formatInterviewForPrompt,
   formatObservationForPrompt,
 } from './ai-prompts';
@@ -72,6 +74,36 @@ export class AiService {
     const draft = await this.callAI(OBSERVATION_SYSTEM_PROMPT, userPrompt);
 
     return this.saveDraft(reportId, SectionType.OBSERVED_BEHAVIOR, draft, user.sub);
+  }
+
+  async extractInterviewFromPdf(reportId: string, fileBuffer: Buffer, user: UserPayload) {
+    await this.reportsService.checkEditAccess(reportId, user);
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pdfParse = require('pdf-parse');
+    let pdfText: string;
+    try {
+      const parsed = await pdfParse(fileBuffer);
+      pdfText = parsed.text?.trim() ?? '';
+    } catch {
+      throw new InternalServerErrorException('No se pudo leer el PDF. Asegúrese de que es un PDF válido con texto seleccionable.');
+    }
+
+    if (!pdfText || pdfText.length < 30) {
+      throw new InternalServerErrorException(
+        'El PDF no contiene texto legible. Si es una imagen escaneada, transcríbalo manualmente.',
+      );
+    }
+
+    const userPrompt = buildPdfExtractionPrompt(pdfText);
+    const raw = await this.callAI(PDF_INTERVIEW_EXTRACTION_SYSTEM_PROMPT, userPrompt);
+
+    try {
+      const extracted = JSON.parse(raw);
+      return { extracted };
+    } catch {
+      throw new InternalServerErrorException('La IA no devolvió un JSON válido. Intente nuevamente.');
+    }
   }
 
   private async callAI(systemPrompt: string, userPrompt: string): Promise<string> {
