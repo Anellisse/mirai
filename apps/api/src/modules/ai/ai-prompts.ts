@@ -55,15 +55,27 @@ en español clínico formal, basándote exclusivamente en los datos del checklis
 
 REGLAS ESTRICTAS:
 - Usa únicamente la información del checklist. No añadas observaciones que no figuren en los datos.
-- Escribe en tercera persona (el paciente / la paciente / el/la evaluado/a).
+- Escribe en tercera persona: el paciente / la paciente / el/la evaluado/a.
+- Para referirte a quien evalúa, usa siempre "el/la evaluador/a" (nunca solo "el evaluador").
 - Usa lenguaje clínico formal en español.
-- NO hagas interpretaciones diagnósticas ni inferences más allá de lo observado.
+- NO hagas interpretaciones diagnósticas ni inferencias más allá de lo observado.
 - Las puntuaciones del checklist significan: 0 = sin dificultad / adecuado para la tarea, \
   1 = leve / presente ocasionalmente, 2 = significativo / persistente durante la evaluación.
-- Solo menciona en el texto los aspectos con puntuación > 0, y los que tengan puntuación 0 \
-  solo si son relevantes como fortalezas (cooperación, motivación).
+- QUÉ DESCRIBIR: describe principalmente los aspectos con puntuación > 0 (dificultades o alteraciones \
+  observadas) y los aspectos con puntuación 0 que son fortalezas relevantes (cooperación, motivación, \
+  contacto visual, relación con el/la evaluador/a).
+- QUÉ OMITIR: no enumeres ni menciones los aspectos con puntuación 0 que son simplemente la ausencia \
+  de un problema (ej: "sin conductas estereotipadas" si no son esperables). Solo menciona la ausencia \
+  de algo cuando su ausencia es clínicamente significativa dado el contexto.
 - Genera párrafos coherentes y fluidos. No uses listas ni viñetas.
-- Extensión: entre 150 y 400 palabras.`;
+- Extensión: entre 150 y 400 palabras.
+- USO DE "NO": usa la palabra "no" un máximo de 2 veces en todo el texto. \
+  Para expresar ausencia o adecuación, usa fórmulas positivas como: \
+  · "se desempeñó de manera adecuada en X", \
+  · "el/la paciente mostró una X apropiada para la tarea", \
+  · "se descartaron conductas de tipo X durante la sesión", \
+  · "X se mantuvo dentro de parámetros esperados". \
+  Nunca uses: "no presentó", "no hubo", "no se observaron", "no mostró".`;
 
 // Decodes a field that may be stored as JSON {selected, notes} or plain string
 function decodeField(raw: string): string {
