@@ -8,7 +8,7 @@ export interface CognitiveTestInfo {
 export interface ProcedureSourceData {
   interviewWith: 'PARENTS' | 'PATIENT' | 'BOTH' | 'NONE';
   interviewModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
-  adirModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
+  adirModality: 'PRESENCIAL' | 'TELEPRESENCIAL'; // stored for UI, not used in text generation
   questionnairesShared: boolean;
   questionnaireRespondent: 'FAMILY' | 'PATIENT' | 'TEACHER' | 'OTHER' | null;
   questionnaireRespondentCustom: string | null;

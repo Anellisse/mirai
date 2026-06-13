@@ -45,6 +45,11 @@ describe('generateProcedureText', () => {
       const text = generateProcedureText({ ...base, interviewWith: 'NONE' }, 'Agustina Pérez', cogTests);
       expect(text).not.toContain('Se realizó entrevista');
     });
+
+    it('adds "telefónica" for BOTH telepresencial', () => {
+      const text = generateProcedureText({ ...base, interviewWith: 'BOTH', interviewModality: 'TELEPRESENCIAL' }, 'Agustina Pérez', cogTests);
+      expect(text).toContain('Se realizó entrevista telefónica con Agustina y sus padres');
+    });
   });
 
   describe('Procedimiento — cuerpo y cuestionarios', () => {
@@ -82,6 +87,18 @@ describe('generateProcedureText', () => {
       const data = { ...base, questionnairesShared: true, questionnaireRespondent: 'OTHER' as const, questionnaireRespondentCustom: 'para la abuela' };
       const text = generateProcedureText(data, 'Agustina Pérez', [...cogTests, ...questTests]);
       expect(text).toContain('cuestionarios para la abuela');
+    });
+
+    it('omits questionnaire paragraph when questionnairesShared is true but respondent is null', () => {
+      const data = { ...base, questionnairesShared: true, questionnaireRespondent: null };
+      const text = generateProcedureText(data, 'Agustina Pérez', [...cogTests, ...questTests]);
+      expect(text).not.toContain('se envió un set de cuestionarios');
+    });
+
+    it('falls back to "para el informante" when OTHER respondent has no custom text', () => {
+      const data = { ...base, questionnairesShared: true, questionnaireRespondent: 'OTHER' as const, questionnaireRespondentCustom: null };
+      const text = generateProcedureText(data, 'Agustina Pérez', [...cogTests, ...questTests]);
+      expect(text).toContain('cuestionarios para el informante');
     });
   });
 
