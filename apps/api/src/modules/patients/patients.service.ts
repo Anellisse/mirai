@@ -105,7 +105,7 @@ export class PatientsService {
 
     if (!assigned && !granted) throw new ForbiddenException('Sin acceso al paciente');
 
-    const { rutEncrypted, rutHash, ...safe } = patient as any;
+    const { rutEncrypted, rutHash, email: _email, phone: _phone, ...safe } = patient as any;
     const rut = rutEncrypted ? this.encryption.decryptRut(rutEncrypted) : null;
     return { ...safe, rut };
   }
@@ -115,8 +115,12 @@ export class PatientsService {
       name: dto.name,
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
       gender: dto.gender,
-      email: dto.email,
-      phone: dto.phone,
+      laterality: dto.laterality,
+      interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
+      schoolName: dto.schoolName,
+      schoolGrade: dto.schoolGrade,
+      currentInstitution: dto.currentInstitution,
+      occupation: dto.occupation,
       organizationId,
       createdById: userId,
     };
@@ -139,8 +143,12 @@ export class PatientsService {
         name: dto.name,
         birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
         gender: dto.gender,
-        email: dto.email,
-        phone: dto.phone,
+        laterality: dto.laterality,
+        interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
+        schoolName: dto.schoolName,
+        schoolGrade: dto.schoolGrade,
+        currentInstitution: dto.currentInstitution,
+        occupation: dto.occupation,
       },
     });
   }

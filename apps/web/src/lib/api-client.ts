@@ -248,8 +248,12 @@ export interface PatientDetail {
   rut?: string;
   birthDate?: string;
   gender?: string;
-  email?: string;
-  phone?: string;
+  laterality?: string;
+  interviewDate?: string;
+  schoolName?: string;
+  schoolGrade?: string;
+  currentInstitution?: string;
+  occupation?: string;
   isAssigned: boolean;
   reports: ReportSummary[];
 }
@@ -259,8 +263,12 @@ export interface CreatePatientInput {
   rut?: string;
   birthDate?: string;
   gender?: string;
-  email?: string;
-  phone?: string;
+  laterality?: string;
+  interviewDate?: string;
+  schoolName?: string;
+  schoolGrade?: string;
+  currentInstitution?: string;
+  occupation?: string;
 }
 
 export interface ReportSummary {

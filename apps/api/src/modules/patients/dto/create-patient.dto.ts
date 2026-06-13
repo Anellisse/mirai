@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsOptional, IsString, Matches } from 'class-validator';
+import { IsDateString, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreatePatientDto {
   @IsString()
@@ -18,10 +18,26 @@ export class CreatePatientDto {
   gender?: string;
 
   @IsOptional()
-  @IsEmail()
-  email?: string;
+  @IsString()
+  laterality?: string;
+
+  @IsOptional()
+  @IsDateString()
+  interviewDate?: string;
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  schoolName?: string;
+
+  @IsOptional()
+  @IsString()
+  schoolGrade?: string;
+
+  @IsOptional()
+  @IsString()
+  currentInstitution?: string;
+
+  @IsOptional()
+  @IsString()
+  occupation?: string;
 }

@@ -132,19 +132,23 @@ model User {
 // ─── Patient ──────────────────────────────────────────────────────────────────
 
 model Patient {
-  id             String    @id @default(cuid())
-  organizationId String
-  createdById    String
-  rutEncrypted   String?
-  rutHash        String?
-  name           String
-  birthDate      DateTime?
-  gender         String?
-  email          String?
-  phone          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
+  id                  String    @id @default(cuid())
+  organizationId      String
+  createdById         String
+  rutEncrypted        String?
+  rutHash             String?
+  name                String
+  birthDate           DateTime?
+  gender              String?
+  laterality          String?   // Diestro / Zurdo / Ambidiestro
+  interviewDate       DateTime?
+  schoolName          String?   // Colegio (menores de edad)
+  schoolGrade         String?   // Curso (menores de edad)
+  currentInstitution  String?   // Universidad/institución (adultos)
+  occupation          String?   // Profesión u ocupación (adultos)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
   organization    Organization    @relation(fields: [organizationId], references: [id])
   createdBy       User            @relation("CreatedPatients", fields: [createdById], references: [id])

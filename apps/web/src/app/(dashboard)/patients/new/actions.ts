@@ -14,16 +14,13 @@ export async function createPatient(
   const body: Record<string, string> = {
     name: formData.get('name') as string,
   };
-  const rut = formData.get('rut') as string;
-  const birthDate = formData.get('birthDate') as string;
-  const gender = formData.get('gender') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
-  if (rut) body.rut = rut;
-  if (birthDate) body.birthDate = birthDate;
-  if (gender) body.gender = gender;
-  if (email) body.email = email;
-  if (phone) body.phone = phone;
+
+  const fields = ['rut', 'birthDate', 'gender', 'laterality', 'interviewDate',
+    'schoolName', 'schoolGrade', 'currentInstitution', 'occupation'] as const;
+  for (const f of fields) {
+    const val = formData.get(f) as string;
+    if (val) body[f] = val;
+  }
 
   const res = await fetch(`${API_URL}/api/patients`, {
     method: 'POST',
