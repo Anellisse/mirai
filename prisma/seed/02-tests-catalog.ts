@@ -13,7 +13,7 @@ const TESTS_CATALOG = [
   { code: 'ADI-R', name: 'Entrevista para el Diagnóstico del Autismo-Revisada (ADI-R)', abbreviation: 'ADI-R', type: 'social-cognition', applicableFrameworks: ['SNP_CHC'], requiresInformant: true, orderIndex: 10 },
   { code: 'BASC-3', name: 'Sistema de Evaluación de la Conducta de Niños y Adolescentes, tercera edición (BASC-3)', abbreviation: 'BASC-3', type: 'questionnaire', applicableFrameworks: ['SNP_CHC'], requiresInformant: true, orderIndex: 11 },
   { code: 'ASRS-18', name: 'Escala de Autoevaluación del TDAH en Adultos (ASRS-18)', abbreviation: 'ASRS-18', type: 'questionnaire', applicableFrameworks: ['STANDARD'], requiresInformant: false, orderIndex: 12 },
-  { code: 'DEX-SP', name: 'Cuestionario Disejecutivo (DEX-Sp)', abbreviation: 'DEX-Sp', type: 'questionnaire', applicableFrameworks: ['STANDARD'], requiresInformant: false, orderIndex: 13 },
+  { code: 'DEX-Sp', name: 'Cuestionario Disejecutivo (DEX-Sp)', abbreviation: 'DEX-Sp', type: 'questionnaire', applicableFrameworks: ['STANDARD'], requiresInformant: false, orderIndex: 13 },
   { code: 'BAI', name: 'Inventario de Ansiedad de Beck (BAI)', abbreviation: 'BAI', type: 'questionnaire', applicableFrameworks: ['STANDARD'], requiresInformant: false, orderIndex: 14 },
   { code: 'BDI-II', name: 'Inventario de Depresión de Beck, segunda edición (BDI-II)', abbreviation: 'BDI-II', type: 'questionnaire', applicableFrameworks: ['STANDARD'], requiresInformant: false, orderIndex: 15 },
 ];

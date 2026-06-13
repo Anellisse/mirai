@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { GeneratedBy, Prisma, SectionStatus, SectionType } from '@prisma/client';
 import { UserPayload } from '@mirai/shared-types';
 import { PrismaService } from '../../prisma.service';
@@ -93,6 +93,10 @@ export class ProcedureService {
     });
 
     if (!section) throw new NotFoundException('Sección no encontrada');
+
+    if (section.status === SectionStatus.APPROVED) {
+      throw new ForbiddenException('Sección ya aprobada');
+    }
 
     const updated = await this.prisma.reportSection.update({
       where: { id: section.id },

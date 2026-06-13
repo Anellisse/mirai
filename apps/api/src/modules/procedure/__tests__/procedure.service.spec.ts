@@ -172,5 +172,16 @@ describe('ProcedureService', () => {
       const service = new ProcedureService(prisma as any, makeReportsService() as any);
       await expect(service.upsertProcedure('report-1', baseDto, user)).rejects.toThrow(NotFoundException);
     });
+
+    it('throws ForbiddenException when section is already APPROVED', async () => {
+      const prisma = makePrisma({
+        reportSection: {
+          findFirst: jest.fn().mockResolvedValue({ ...mockSection, status: SectionStatus.APPROVED }),
+          update: jest.fn(),
+        },
+      });
+      const service = new ProcedureService(prisma as any, makeReportsService() as any);
+      await expect(service.upsertProcedure('report-1', baseDto, user)).rejects.toThrow(ForbiddenException);
+    });
   });
 });

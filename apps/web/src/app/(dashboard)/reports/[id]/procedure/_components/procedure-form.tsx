@@ -35,8 +35,7 @@ const TESTS_BY_FRAMEWORK: Record<string, TestOption[]> = {
   ],
 };
 
-// DEX-SP is the seed code; DEX-Sp is what the wizard sends — keep both until the inconsistency is resolved
-const QUESTIONNAIRE_CODES = new Set(['BASC-3', 'ASRS-18', 'DEX-Sp', 'DEX-SP', 'BAI', 'BDI-II']);
+const QUESTIONNAIRE_CODES = new Set(['BASC-3', 'ASRS-18', 'DEX-Sp', 'BAI', 'BDI-II']);
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pendiente',
