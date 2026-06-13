@@ -42,7 +42,9 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const text = await res.text();
+  if (!text) return null as T;
+  return JSON.parse(text);
 }
 
 export const apiClient = {
