@@ -138,9 +138,8 @@ const labelCls = 'block text-sm font-medium text-gray-700 mb-1';
 
 export function ConsultationReasonForm({ reportId, initialSection }: Props) {
   const [data, setData] = useState<CRData>(() => {
-    const src = initialSection?.aiRawOutput
-      ? JSON.parse(initialSection.aiRawOutput) as CRData
-      : EMPTY;
+    const src = (initialSection?.sourceData?.consultationReason as CRData | undefined)
+      ?? EMPTY;
     return { ...EMPTY, ...src };
   });
   const [section, setSection] = useState<SectionSummary | null>(initialSection);

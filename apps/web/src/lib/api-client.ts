@@ -321,6 +321,7 @@ export interface SectionSummary {
   generatedBy: string;
   content?: string | null;
   aiRawOutput?: string | null;
+  sourceData?: Record<string, unknown> | null;
   clinicianEdited?: boolean;
 }
 
