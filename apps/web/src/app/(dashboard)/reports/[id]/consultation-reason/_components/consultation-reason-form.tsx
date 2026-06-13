@@ -37,7 +37,7 @@ const REASON_OPTIONS = [
 ];
 
 const PURPOSE_OPTIONS = [
-  'Evaluar la presencia de un diagnóstico diferencial',
+  'Indagar en la presencia de un diagnóstico diferencial',
   'Dilucidar diagnóstico',
   'Generar un perfil de fortalezas y debilidades',
   'Orientar estrategias de intervención',
