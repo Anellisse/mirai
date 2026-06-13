@@ -137,19 +137,26 @@ export class PatientsService {
     const assigned = await this.isAssigned(userId, patientId);
     if (!assigned) throw new ForbiddenException('Sin acceso al paciente');
 
+    const data: Record<string, unknown> = {
+      name: dto.name,
+      birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+      gender: dto.gender,
+      laterality: dto.laterality,
+      interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
+      schoolName: dto.schoolName,
+      schoolGrade: dto.schoolGrade,
+      currentInstitution: dto.currentInstitution,
+      occupation: dto.occupation,
+    };
+
+    if (dto.rut) {
+      data.rutHash = this.encryption.hashRut(dto.rut);
+      data.rutEncrypted = this.encryption.encryptRut(dto.rut);
+    }
+
     return this.prisma.patient.update({
       where: { id: patientId, organizationId },
-      data: {
-        name: dto.name,
-        birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
-        gender: dto.gender,
-        laterality: dto.laterality,
-        interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
-        schoolName: dto.schoolName,
-        schoolGrade: dto.schoolGrade,
-        currentInstitution: dto.currentInstitution,
-        occupation: dto.occupation,
-      },
+      data: data as any,
     });
   }
 

@@ -1,9 +1,14 @@
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsOptional, IsString, Matches } from 'class-validator';
 
 export class UpdatePatientDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[\d.]+[-][\dkK]$|^\d+[kK]?$/, { message: 'Formato de RUT inválido' })
+  rut?: string;
 
   @IsOptional()
   @IsDateString()

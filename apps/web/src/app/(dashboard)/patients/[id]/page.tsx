@@ -38,18 +38,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">{patient.name}</h1>
       </div>
-      <PatientInfo
-        name={patient.name}
-        rut={patient.rut}
-        birthDate={patient.birthDate}
-        gender={patient.gender}
-        laterality={patient.laterality}
-        interviewDate={patient.interviewDate}
-        schoolName={patient.schoolName}
-        schoolGrade={patient.schoolGrade}
-        currentInstitution={patient.currentInstitution}
-        occupation={patient.occupation}
-      />
+      <PatientInfo patient={patient} />
       <ReportList reports={patient.reports} patientId={patient.id} />
     </div>
   );
