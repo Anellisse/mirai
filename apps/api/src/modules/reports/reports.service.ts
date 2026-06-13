@@ -128,7 +128,7 @@ export class ReportsService {
     return this.prisma.report.update({ where: { id: reportId }, data: dto });
   }
 
-  async saveSection(reportId: string, sectionType: string, content: string, user: UserPayload) {
+  async saveSection(reportId: string, sectionType: string, content: string, user: UserPayload, sourceData?: Record<string, unknown>) {
     const report = await this.prisma.report.findFirst({
       where: { id: reportId, deletedAt: null },
     });
@@ -159,7 +159,12 @@ export class ReportsService {
 
     const updated = await this.prisma.reportSection.update({
       where: { id: section.id },
-      data: { content, status: newStatus, clinicianEdited: true },
+      data: {
+        content,
+        status: newStatus,
+        clinicianEdited: true,
+        ...(sourceData !== undefined ? { sourceData: sourceData as any } : {}),
+      },
     });
 
     await this.prisma.auditLog.create({

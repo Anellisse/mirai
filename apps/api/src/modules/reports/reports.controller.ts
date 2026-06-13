@@ -49,7 +49,7 @@ export class ReportsController {
     @Body() dto: UpdateSectionDto,
     @CurrentUser() user: UserPayload,
   ) {
-    return this.reports.saveSection(id, sectionType, dto.content ?? '', user);
+    return this.reports.saveSection(id, sectionType, dto.content ?? '', user, dto.sourceData);
   }
 
   @Post(':id/sections/:sectionType/approve')

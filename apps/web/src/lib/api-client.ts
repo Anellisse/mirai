@@ -68,10 +68,10 @@ export const apiClient = {
     apiFetch(`/reports/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   transitionReport: (id: string, action: string) =>
     apiFetch(`/reports/${id}/transition`, { method: 'POST', body: JSON.stringify({ action }) }),
-  saveSection: (reportId: string, sectionType: string, content: string) =>
+  saveSection: (reportId: string, sectionType: string, content: string, sourceData?: Record<string, unknown>) =>
     apiFetch<SectionSummary>(`/reports/${reportId}/sections/${sectionType}`, {
       method: 'PATCH',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, ...(sourceData ? { sourceData } : {}) }),
     }),
   approveSection: (reportId: string, sectionType: string) =>
     apiFetch<SectionSummary>(`/reports/${reportId}/sections/${sectionType}/approve`, { method: 'POST' }),

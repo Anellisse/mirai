@@ -4,4 +4,7 @@ export class UpdateSectionDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @IsOptional()
+  sourceData?: Record<string, unknown>;
 }
