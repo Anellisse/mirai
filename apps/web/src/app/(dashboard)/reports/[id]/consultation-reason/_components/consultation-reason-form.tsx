@@ -68,24 +68,27 @@ export interface CRData {
 }
 
 function generateText(d: CRData): string {
-  // Quién
+  // Quién — complemento de "solicitada por"
   let quien = '';
   switch (d.requesterType) {
     case 'familia':
-      quien = 'solicitud de la familia del paciente'; break;
+      quien = 'la familia del/la paciente'; break;
     case 'paciente_mismo':
-      quien = 'solicitud del propio paciente'; break;
+      quien = 'el/la propio/a paciente'; break;
     case 'profesional': {
-      const tipo = d.professionalType === 'Otro' ? (d.professionalTypeOther || 'profesional') : (d.professionalType || 'profesional');
-      const nombre = d.professionalName ? `${d.professionalName}, ` : '';
-      quien = `derivación de ${nombre}${tipo.toLowerCase()}`; break;
+      const tipo = d.professionalType === 'Otro'
+        ? (d.professionalTypeOther || 'profesional')
+        : (d.professionalType || 'profesional');
+      quien = d.professionalName
+        ? `${d.professionalName}, ${tipo.toLowerCase()}`
+        : `${tipo.toLowerCase()}`; break;
     }
     case 'colegio':
-      quien = 'solicitud del establecimiento educacional'; break;
+      quien = 'el establecimiento educacional'; break;
     case 'institucion':
-      quien = `solicitud de ${d.requesterOtherText || 'la institución'}`; break;
+      quien = d.requesterOtherText || 'la institución'; break;
     default:
-      quien = `solicitud de ${d.requesterOtherText || 'quien consulta'}`; break;
+      quien = d.requesterOtherText || 'quien consulta'; break;
   }
 
   // Razones
@@ -98,15 +101,8 @@ function generateText(d: CRData): string {
   if (d.purposes.includes('Otro') && d.purposeOther) purposesList.push(d.purposeOther);
   const purposesText = joinList(purposesList);
 
-  // Verbo según quién
-  const verbRefiere =
-    d.requesterType === 'familia' ? 'quienes refieren'
-    : d.requesterType === 'paciente_mismo' ? 'quien refiere'
-    : d.requesterType === 'profesional' ? 'quien reporta'
-    : 'señalando';
-
-  let text = `Consulta realizada a ${quien}`;
-  if (reasonsText) text += `, ${verbRefiere} ${reasonsText}`;
+  let text = `Esta evaluación es solicitada por ${quien}`;
+  if (reasonsText) text += `, ante ${reasonsText}`;
   text += '.';
 
   if (purposesText) {
