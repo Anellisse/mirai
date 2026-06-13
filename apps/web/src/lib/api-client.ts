@@ -28,6 +28,7 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const authHeader = await getAuthHeader();
   const res = await fetch(`${API_URL}${path}`, {
+    cache: 'no-store',
     ...init,
     headers: {
       'Content-Type': 'application/json',
