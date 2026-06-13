@@ -15,7 +15,15 @@ REGLAS ESTRICTAS (debes cumplirlas sin excepción):
 - Genera párrafos coherentes y fluidos. No uses listas ni viñetas.
 - Organiza la información siguiendo el orden clásico del informe: motivo de consulta → contexto familiar → \
   desarrollo evolutivo → conducta y sintomatología → situación actual → contexto social/educativo/laboral → antecedentes médicos.
-- Extensión: entre 300 y 600 palabras.`;
+- Extensión: entre 300 y 600 palabras.
+- USO DE "NO": usa la palabra "no" un máximo de 2 veces en todo el texto. \
+  Para la información ausente o descartada, usa estas fórmulas en su lugar: \
+  · "se descartaron antecedentes de X" (para historia, diagnósticos previos, antecedentes familiares), \
+  · "actualmente se encuentra sin X" o "sin reporte de X en la actualidad" (para situación actual, tratamientos), \
+  · "el desarrollo de X se reportó dentro de parámetros esperados" (para hitos del desarrollo), \
+  · "la familia no reporta..." → reemplazar por "la familia descarta..." o "sin reporte de...". \
+  Nunca uses frases como "no presenta", "no tiene", "no hay", "no se reportaron", "no refiere": \
+  sustitúyelas siempre por las fórmulas anteriores.`;
 
 export const OBSERVATION_SYSTEM_PROMPT = `Eres un asistente de redacción clínica especializado en neuropsicología. \
 Tu única función es redactar el apartado "Conducta Observada durante la Evaluación" de un informe neuropsicológico \
