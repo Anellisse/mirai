@@ -43,26 +43,31 @@ export class EvaluationService {
 
     const existingByTestId = new Map(existingResults.map((r) => [r.testId, r]));
 
-    return selectedTestCodes.flatMap((code) => {
+    const rows: typeof existingResults = [];
+    for (const code of selectedTestCodes) {
       const test = cognitiveTests.find((t) => t.code === code);
-      if (!test) return [];
+      if (!test) continue;
       const existing = existingByTestId.get(test.id);
-      if (existing) return [existing];
-      return [{
-        id: '',
-        testId: test.id,
-        reportId,
-        scores: {} as Record<string, number | null>,
-        rawScore: null,
-        standardScore: null,
-        scoreType: null,
-        percentile: null,
-        descriptor: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        test,
-      }];
-    });
+      if (existing) {
+        rows.push(existing);
+      } else {
+        rows.push({
+          id: '',
+          testId: test.id,
+          reportId,
+          scores: {} as Prisma.JsonValue,
+          rawScore: null,
+          standardScore: null,
+          scoreType: null,
+          percentile: null,
+          descriptor: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          test,
+        } as typeof existingResults[number]);
+      }
+    }
+    return rows;
   }
 
   async upsertScores(reportId: string, testId: string, dto: UpsertScoresDto, user: UserPayload) {
