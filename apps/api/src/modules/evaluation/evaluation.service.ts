@@ -20,24 +20,49 @@ export class EvaluationService {
       select: { selectedTests: true },
     });
 
-    const selectedTests = report?.selectedTests ?? [];
+    const selectedTestCodes = (report?.selectedTests ?? []) as string[];
+    if (selectedTestCodes.length === 0) return [];
 
-    return this.prisma.testResult.findMany({
-      where: { reportId },
-      include: {
-        test: {
-          include: {
-            scoreSlots: {
-              include: { descriptorScale: true },
-              orderBy: { orderIndex: 'asc' },
-            },
-          },
-        },
+    const includeSlots = {
+      scoreSlots: {
+        include: { descriptorScale: true },
+        orderBy: { orderIndex: 'asc' as const },
       },
-      orderBy: { createdAt: 'asc' },
-    }).then((results) =>
-      results.filter((r) => selectedTests.includes(r.test.code)),
-    );
+    };
+
+    const [cognitiveTests, existingResults] = await Promise.all([
+      this.prisma.cognitiveTest.findMany({
+        where: { code: { in: selectedTestCodes } },
+        include: includeSlots,
+      }),
+      this.prisma.testResult.findMany({
+        where: { reportId },
+        include: { test: { include: includeSlots } },
+      }),
+    ]);
+
+    const existingByTestId = new Map(existingResults.map((r) => [r.testId, r]));
+
+    return selectedTestCodes.flatMap((code) => {
+      const test = cognitiveTests.find((t) => t.code === code);
+      if (!test) return [];
+      const existing = existingByTestId.get(test.id);
+      if (existing) return [existing];
+      return [{
+        id: '',
+        testId: test.id,
+        reportId,
+        scores: {} as Record<string, number | null>,
+        rawScore: null,
+        standardScore: null,
+        scoreType: null,
+        percentile: null,
+        descriptor: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        test,
+      }];
+    });
   }
 
   async upsertScores(reportId: string, testId: string, dto: UpsertScoresDto, user: UserPayload) {
