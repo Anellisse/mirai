@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient, InterviewData } from '@/lib/api-client';
 
 // ── Codificación de campos estructurados ─────────────────────────────────────
@@ -161,8 +162,11 @@ const OPT = {
 
 interface Props { reportId: string; initial: InterviewData }
 type S = keyof InterviewData;
+type Mode = 'form' | 'pdf';
 
 export function InterviewForm({ reportId, initial }: Props) {
+  const router = useRouter();
+  const [mode, setMode] = useState<Mode>('form');
   function field(s: S, k: string) { return (initial[s] as any)?.[k] as string | undefined; }
 
   // Sección 2
@@ -211,11 +215,9 @@ export function InterviewForm({ reportId, initial }: Props) {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  // PDF extraction state
-  const [pdfOpen, setPdfOpen] = useState(false);
-  const [extracting, setExtracting] = useState(false);
-  const [extractError, setExtractError] = useState('');
-  const [extractSuccess, setExtractSuccess] = useState(false);
+  // PDF mode state
+  const [generating, setGenerating] = useState(false);
+  const [pdfError, setPdfError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   function buildData(): InterviewData {
@@ -277,43 +279,17 @@ export function InterviewForm({ reportId, initial }: Props) {
     }
   }
 
-  async function handleExtractPdf(file: File) {
-    setExtracting(true); setExtractError(''); setExtractSuccess(false);
+  async function handlePdfUpload(file: File) {
+    setGenerating(true); setPdfError('');
     try {
-      const { extracted } = await apiClient.extractInterviewFromPdf(reportId, file);
-      // Hydrate state from extracted data (best-effort)
-      const s = extracted as any;
-      if (s.section2?.householdMembers) setHouseholdMembers(decodeMulti(s.section2.householdMembers));
-      if (s.section2?.householdRelationType) setRelationType(s.section2.householdRelationType);
-      if (s.section2?.primaryCaregivers) setCaregivers(decodeMulti(s.section2.primaryCaregivers));
-      if (s.section2?.psychosocialContext) setPsychosocial(decodeMulti(s.section2.psychosocialContext));
-      if (s.section3?.pregnancyAndBirth) setPregnancy(decodeMulti(s.section3.pregnancyAndBirth));
-      if (s.section3?.psychomotorMilestones) setMilestones(decodeSingle(s.section3.psychomotorMilestones));
-      if (s.section3?.languageDevelopment) setLanguage(decodeSingle(s.section3.languageDevelopment));
-      if (s.section3?.sphincterControl) setSphincter(s.section3.sphincterControl);
-      if (s.section4?.childhoodBehavior) setChildhoodBehavior(decodeMulti(s.section4.childhoodBehavior));
-      if (s.section4?.childhoodSymptoms) setChildhoodSymptoms(decodeMulti(s.section4.childhoodSymptoms));
-      if (s.section4?.emotionalRegulationChildhood) setEmotionalReg(decodeSingle(s.section4.emotionalRegulationChildhood));
-      if (s.section4?.relationshipWithAuthority) setAuthority(decodeSingle(s.section4.relationshipWithAuthority));
-      if (s.section5?.currentSymptomsDescription) setCurrentSymptoms(decodeMulti(s.section5.currentSymptomsDescription));
-      if (s.section5?.dailyFunctioningImpact) setDailyImpact(decodeMulti(s.section5.dailyFunctioningImpact));
-      if (s.section5?.currentTreatments) setTreatments(decodeMulti(s.section5.currentTreatments));
-      if (s.section6?.currentFriendships) setFriendships(decodeSingle(s.section6.currentFriendships));
-      if (s.section6?.currentSocialNetworks) setSocialNetworks(decodeMulti(s.section6.currentSocialNetworks));
-      if (s.section6?.hobbiesAndInterests) setHobbies(decodeMulti(s.section6.hobbiesAndInterests));
-      if (s.section7?.educationLevel) setEducationLevel(s.section7.educationLevel);
-      if (s.section7?.receivedSupport) setSupport(decodeMulti(s.section7.receivedSupport));
-      if (s.section7?.workSituation) setWorkSituation(s.section7.workSituation);
-      if (s.section8?.previousDiagnoses) setDiagnoses(decodeMulti(s.section8.previousDiagnoses));
-      if (s.section8?.currentMedication) setMedication(s.section8.currentMedication);
-      if (s.section8?.hospitalizationsTraumas) setHospitalizations(decodeMulti(s.section8.hospitalizationsTraumas));
-      if (s.section8?.previousEvaluations) setPrevEvals(decodeMulti(s.section8.previousEvaluations));
-      if (s.section8?.familyMedicalHistory) setFamilyHistory(decodeMulti(s.section8.familyMedicalHistory));
-      setExtractSuccess(true); setSaved(false);
+      // Genera el borrador IA directamente desde el PDF y guarda en la sección BACKGROUND
+      await apiClient.generateBackgroundFromPdf(reportId, file);
+      // Refresca la página para que AiDraftPanel muestre el texto generado
+      router.refresh();
     } catch (e: unknown) {
-      setExtractError(e instanceof Error ? e.message : 'Error al procesar el PDF.');
+      setPdfError(e instanceof Error ? e.message : 'Error al procesar el PDF.');
     } finally {
-      setExtracting(false);
+      setGenerating(false);
     }
   }
 
@@ -327,32 +303,66 @@ export function InterviewForm({ reportId, initial }: Props) {
   return (
     <div className="space-y-6">
 
-      {/* ── Opción PDF ─────────────────────────────────────────── */}
-      <div className="border border-dashed border-brand-300 rounded-lg overflow-hidden">
-        <button type="button" onClick={() => setPdfOpen(v => !v)}
-          className="w-full flex items-center justify-between px-5 py-3 bg-brand-50 hover:bg-brand-100 transition text-sm font-medium text-brand-700">
-          <span>📄 Subir ficha de anamnesis en PDF para pre-completar el formulario</span>
-          <span className="text-brand-400 text-xs">{pdfOpen ? '▲ Ocultar' : '▼ Expandir'}</span>
+      {/* ── Toggle de modo ─────────────────────────────────────── */}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => setMode('form')}
+          className={`flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition ${
+            mode === 'form'
+              ? 'bg-brand-600 text-white border-brand-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400'
+          }`}
+        >
+          📋 Completar formulario
         </button>
-        {pdfOpen && (
-          <div className="px-5 py-4 space-y-3 bg-white">
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
-              El PDF debe contener texto seleccionable. Si fue completado a mano, use el formulario directamente.
-            </p>
-            <div className="flex items-center gap-3">
-              <input ref={fileRef} type="file" accept="application/pdf" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleExtractPdf(f); e.target.value = ''; }} />
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting}
-                className="bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
-                {extracting ? 'Extrayendo…' : 'Seleccionar PDF'}
-              </button>
-              {extracting && <span className="text-xs text-gray-400">Procesando con IA…</span>}
-            </div>
-            {extractError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-md">{extractError}</p>}
-            {extractSuccess && <p className="text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded-md">✓ Datos cargados. Revise y corrija antes de guardar.</p>}
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setMode('pdf')}
+          className={`flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition ${
+            mode === 'pdf'
+              ? 'bg-brand-600 text-white border-brand-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400'
+          }`}
+        >
+          📄 Subir ficha PDF
+        </button>
       </div>
+
+      {/* ── Modo PDF ───────────────────────────────────────────── */}
+      {mode === 'pdf' && (
+        <div className="border rounded-lg p-6 space-y-4 bg-gray-50">
+          <p className="text-sm text-gray-700">
+            Suba la ficha de anamnesis en PDF. La IA leerá el documento y generará directamente
+            el borrador de <strong>Antecedentes relevantes</strong>, que aparecerá a continuación
+            para que lo revise y edite.
+          </p>
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+            El PDF debe contener texto seleccionable (no imágenes escaneadas).
+          </p>
+          <input
+            ref={fileRef} type="file" accept="application/pdf" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = ''; }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={generating}
+            className="bg-brand-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-brand-700 disabled:opacity-50 w-full"
+          >
+            {generating ? 'Procesando con IA, espere…' : 'Seleccionar PDF y generar borrador'}
+          </button>
+          {pdfError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-md">{pdfError}</p>}
+          {generating && (
+            <p className="text-xs text-gray-400 text-center animate-pulse">
+              Extrayendo texto del PDF y generando la narrativa clínica…
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Secciones del formulario (solo en modo formulario) ─── */}
+      {mode === 'form' && <>
 
       {/* ── Sección 2: Contexto familiar ───────────────────────── */}
       {sec('Contexto familiar', <>
@@ -439,6 +449,8 @@ export function InterviewForm({ reportId, initial }: Props) {
         {saved && <span className="text-sm text-green-600">Guardado ✓</span>}
         {saveError && <span className="text-sm text-red-600">{saveError}</span>}
       </div>
+
+      </>}
     </div>
   );
 }

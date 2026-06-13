@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma.service';
 import { ReportsService } from '../reports/reports.service';
 import {
   BACKGROUND_SYSTEM_PROMPT,
+  BACKGROUND_FROM_PDF_PROMPT,
   OBSERVATION_SYSTEM_PROMPT,
   PDF_INTERVIEW_EXTRACTION_SYSTEM_PROMPT,
   buildPdfExtractionPrompt,
@@ -74,6 +75,37 @@ export class AiService {
     const draft = await this.callAI(OBSERVATION_SYSTEM_PROMPT, userPrompt);
 
     return this.saveDraft(reportId, SectionType.OBSERVED_BEHAVIOR, draft, user.sub);
+  }
+
+  async generateBackgroundFromPdf(reportId: string, fileBuffer: Buffer, user: UserPayload) {
+    await this.reportsService.checkEditAccess(reportId, user);
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pdfParse = require('pdf-parse');
+    let pdfText: string;
+    try {
+      const parsed = await pdfParse(fileBuffer);
+      pdfText = parsed.text?.trim() ?? '';
+    } catch {
+      throw new InternalServerErrorException('No se pudo leer el PDF. Asegúrese de que es un PDF válido con texto seleccionable.');
+    }
+
+    if (!pdfText || pdfText.length < 30) {
+      throw new InternalServerErrorException(
+        'El PDF no contiene texto legible. Si es una imagen escaneada, use el formulario manual.',
+      );
+    }
+
+    const report = await this.prisma.report.findUnique({
+      where: { id: reportId },
+      select: { patient: { select: { name: true } } },
+    });
+    const patientName = report?.patient.name ?? 'el/la paciente';
+
+    const userPrompt = `DATOS DEL PACIENTE: ${patientName}\n\n---\n${pdfText.slice(0, 8000)}\n---`;
+    const draft = await this.callAI(BACKGROUND_FROM_PDF_PROMPT, userPrompt);
+
+    return this.saveDraft(reportId, SectionType.BACKGROUND, draft, user.sub);
   }
 
   async extractInterviewFromPdf(reportId: string, fileBuffer: Buffer, user: UserPayload) {

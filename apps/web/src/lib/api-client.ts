@@ -160,6 +160,21 @@ export const apiClient = {
     apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-background`, { method: 'POST' }),
   generateObservation: (reportId: string) =>
     apiFetch<AiDraftSection>(`/reports/${reportId}/ai/generate-observation`, { method: 'POST' }),
+  generateBackgroundFromPdf: async (reportId: string, file: File): Promise<AiDraftSection> => {
+    const authHeader = await getAuthHeader();
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_URL}/reports/${reportId}/ai/generate-background-from-pdf`, {
+      method: 'POST',
+      headers: authHeader,
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error((err as any).message ?? `API error ${res.status}`);
+    }
+    return res.json();
+  },
   extractInterviewFromPdf: async (reportId: string, file: File): Promise<{ extracted: InterviewData }> => {
     const authHeader = await getAuthHeader();
     const form = new FormData();

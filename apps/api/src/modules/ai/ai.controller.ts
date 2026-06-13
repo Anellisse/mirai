@@ -21,6 +21,16 @@ export class AiController {
     return this.service.generateObservation(reportId, user);
   }
 
+  @Post('generate-background-from-pdf')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  generateBackgroundFromPdf(
+    @Param('id') reportId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.service.generateBackgroundFromPdf(reportId, file.buffer, user);
+  }
+
   @Post('extract-interview-pdf')
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   extractInterviewFromPdf(
