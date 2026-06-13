@@ -262,6 +262,15 @@ export const apiClient = {
   // Audit
   getAuditLogs: (page = 1) =>
     apiFetch<{ data: AuditLogItem[]; total: number; page: number }>(`/audit-logs?page=${page}`),
+
+  // Procedure
+  getProcedure: (reportId: string) =>
+    apiFetch<ProcedureData>(`/reports/${reportId}/procedure`),
+  upsertProcedure: (reportId: string, input: UpsertProcedureInput) =>
+    apiFetch<UpsertProcedureResult>(`/reports/${reportId}/procedure`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 };
 
 // ─── Local types (mirrors API responses) ──────────────────────────────────────
@@ -581,4 +590,37 @@ export interface AuditLogItem {
   metadata: Record<string, unknown> | null;
   createdAt: string;
   user: { name: string; email: string } | null;
+}
+
+export interface ProcedureData {
+  selectedTests: string[];
+  frameworkCode: string;
+  procedureData: ProcedureSourceData | null;
+  content: string | null;
+  sectionStatus: string;
+}
+
+export interface ProcedureSourceData {
+  interviewWith: 'PARENTS' | 'PATIENT' | 'BOTH' | 'NONE';
+  interviewModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
+  adirModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
+  questionnairesShared: boolean;
+  questionnaireRespondent: 'FAMILY' | 'PATIENT' | 'TEACHER' | 'OTHER' | null;
+  questionnaireRespondentCustom: string | null;
+}
+
+export interface UpsertProcedureInput {
+  selectedTests: string[];
+  interviewWith: 'PARENTS' | 'PATIENT' | 'BOTH' | 'NONE';
+  interviewModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
+  adirModality: 'PRESENCIAL' | 'TELEPRESENCIAL';
+  questionnairesShared: boolean;
+  questionnaireRespondent: 'FAMILY' | 'PATIENT' | 'TEACHER' | 'OTHER' | null;
+  questionnaireRespondentCustom?: string;
+}
+
+export interface UpsertProcedureResult {
+  content: string | null;
+  status: string;
+  sourceData: Record<string, unknown> | null;
 }
