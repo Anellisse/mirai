@@ -13,6 +13,10 @@ function toDateInput(iso?: string): string {
   return iso.split('T')[0];
 }
 
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-CL', { timeZone: 'UTC' });
+}
+
 function calcAge(birthDateStr: string): string | null {
   const birth = new Date(birthDateStr + 'T12:00:00');
   if (isNaN(birth.getTime())) return null;
@@ -124,7 +128,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
             <>
               <dt className="text-gray-500">Fecha de nacimiento</dt>
               <dd>
-                {new Date(patient.birthDate).toLocaleDateString('es-CL')}
+                {fmtDate(patient.birthDate!)}
                 {displayAge && <span className="ml-2 text-brand-600 font-medium">({displayAge})</span>}
               </dd>
             </>
@@ -135,7 +139,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
           {patient.schoolGrade && (<><dt className="text-gray-500">Curso</dt><dd>{patient.schoolGrade}</dd></>)}
           {patient.currentInstitution && (<><dt className="text-gray-500">Institución actual</dt><dd>{patient.currentInstitution}</dd></>)}
           {patient.occupation && (<><dt className="text-gray-500">Profesión / Ocupación</dt><dd>{patient.occupation}</dd></>)}
-          {patient.interviewDate && (<><dt className="text-gray-500">Fecha de entrevista</dt><dd>{new Date(patient.interviewDate).toLocaleDateString('es-CL')}</dd></>)}
+          {patient.interviewDate && (<><dt className="text-gray-500">Fecha de entrevista</dt><dd>{fmtDate(patient.interviewDate)}</dd></>)}
         </dl>
       </div>
     );
