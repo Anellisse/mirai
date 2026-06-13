@@ -35,6 +35,7 @@ const TESTS_BY_FRAMEWORK: Record<string, TestOption[]> = {
   ],
 };
 
+// DEX-SP is the seed code; DEX-Sp is what the wizard sends — keep both until the inconsistency is resolved
 const QUESTIONNAIRE_CODES = new Set(['BASC-3', 'ASRS-18', 'DEX-Sp', 'DEX-SP', 'BAI', 'BDI-II']);
 
 const STATUS_LABEL: Record<string, string> = {
@@ -63,7 +64,7 @@ export function ProcedureForm({ reportId, initial }: Props) {
   const [interviewModality, setInterviewModality] = useState<'PRESENCIAL' | 'TELEPRESENCIAL'>(saved?.interviewModality ?? 'PRESENCIAL');
   const [adirModality, setAdirModality] = useState<'PRESENCIAL' | 'TELEPRESENCIAL'>(saved?.adirModality ?? 'PRESENCIAL');
   const [questionnairesShared, setQuestionnairesShared] = useState(saved?.questionnairesShared ?? false);
-  const [questionnaireRespondent, setQuestionnaireRespondent] = useState<string | null>(saved?.questionnaireRespondent ?? null);
+  const [questionnaireRespondent, setQuestionnaireRespondent] = useState<'FAMILY' | 'PATIENT' | 'TEACHER' | 'OTHER' | null>(saved?.questionnaireRespondent ?? null);
   const [questionnaireRespondentCustom, setQuestionnaireRespondentCustom] = useState(saved?.questionnaireRespondentCustom ?? '');
   const [content, setContent] = useState(initial.content ?? '');
   const [sectionStatus, setSectionStatus] = useState(initial.sectionStatus);
@@ -101,9 +102,7 @@ export function ProcedureForm({ reportId, initial }: Props) {
         interviewModality,
         adirModality,
         questionnairesShared,
-        questionnaireRespondent: questionnairesShared
-          ? (questionnaireRespondent as UpsertProcedureInput['questionnaireRespondent'])
-          : null,
+        questionnaireRespondent: questionnairesShared ? questionnaireRespondent : null,
         questionnaireRespondentCustom:
           questionnaireRespondent === 'OTHER' ? questionnaireRespondentCustom : undefined,
       };
@@ -277,7 +276,11 @@ export function ProcedureForm({ reportId, initial }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Respondidos por</label>
                 <select
                   value={questionnaireRespondent ?? ''}
-                  onChange={e => setQuestionnaireRespondent(e.target.value || null)}
+                  onChange={e => {
+                    const val = (e.target.value || null) as 'FAMILY' | 'PATIENT' | 'TEACHER' | 'OTHER' | null;
+                    setQuestionnaireRespondent(val);
+                    if (val !== 'OTHER') setQuestionnaireRespondentCustom('');
+                  }}
                   disabled={isApproved}
                   className="w-full border rounded-md px-3 py-2 text-sm"
                 >
@@ -310,7 +313,7 @@ export function ProcedureForm({ reportId, initial }: Props) {
       {!isApproved && (
         <button
           onClick={handleGenerate}
-          disabled={generating}
+          disabled={generating || (questionnairesShared && !questionnaireRespondent)}
           className="bg-emerald-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
         >
           {generating ? 'Generando…' : 'Guardar y generar sección'}
