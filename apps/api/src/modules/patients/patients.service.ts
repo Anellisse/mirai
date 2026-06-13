@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { UserPayload } from '@mirai/shared-types';
 import { PrismaService } from '../../prisma.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -44,19 +45,14 @@ export class PatientsService {
     return !!grant;
   }
 
-  async findAll(userId: string, organizationId: string, query: PatientQueryDto) {
-    const where: Record<string, unknown> = {
-      organizationId,
-      deletedAt: null,
-    };
+  async findAll(user: UserPayload, query: PatientQueryDto) {
+    const { sub: userId, organizationId, role } = user;
+    const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
-    if (query.rut) {
-      where.rutHash = this.encryption.hashRut(query.rut);
-    }
+    const where: Record<string, unknown> = { organizationId, deletedAt: null };
 
-    if (query.name) {
-      where.name = { contains: query.name, mode: 'insensitive' };
-    }
+    if (query.rut) where.rutHash = this.encryption.hashRut(query.rut);
+    if (query.name) where.name = { contains: query.name, mode: 'insensitive' };
 
     const patients = await this.prisma.patient.findMany({
       where,
@@ -66,6 +62,8 @@ export class PatientsService {
         name: true,
         birthDate: true,
         gender: true,
+        interviewDate: true,
+        finalDiagnosis: true,
         createdById: true,
         _count: { select: { reports: { where: { deletedAt: null } } } },
       },
@@ -81,7 +79,13 @@ export class PatientsService {
           reportCount: (p as any)._count?.reports ?? 0,
         };
         if (!assigned) return base;
-        return { ...base, birthDate: p.birthDate, gender: p.gender };
+        return {
+          ...base,
+          birthDate: p.birthDate,
+          gender: p.gender,
+          interviewDate: p.interviewDate,
+          ...(isAdmin ? { finalDiagnosis: p.finalDiagnosis } : {}),
+        };
       }),
     );
   }
@@ -121,6 +125,7 @@ export class PatientsService {
       schoolGrade: dto.schoolGrade,
       currentInstitution: dto.currentInstitution,
       occupation: dto.occupation,
+      finalDiagnosis: dto.finalDiagnosis,
       organizationId,
       createdById: userId,
     };
@@ -147,6 +152,7 @@ export class PatientsService {
       schoolGrade: dto.schoolGrade,
       currentInstitution: dto.currentInstitution,
       occupation: dto.occupation,
+      finalDiagnosis: dto.finalDiagnosis,
     };
 
     if (dto.rut) {

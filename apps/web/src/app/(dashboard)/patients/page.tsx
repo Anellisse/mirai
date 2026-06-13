@@ -3,7 +3,11 @@ import { apiClient } from '@/lib/api-client';
 import { PatientTableWrapper } from './_components/patient-table-wrapper';
 
 export default async function PatientsPage() {
-  const patients = await apiClient.getPatients().catch(() => []);
+  const [patients, me] = await Promise.all([
+    apiClient.getPatients().catch(() => []),
+    apiClient.getMe().catch(() => null),
+  ]);
+  const isAdmin = me?.role === 'ADMIN' || me?.role === 'SUPER_ADMIN';
 
   return (
     <div>
@@ -16,7 +20,7 @@ export default async function PatientsPage() {
           Nuevo paciente
         </Link>
       </div>
-      <PatientTableWrapper initialPatients={patients} />
+      <PatientTableWrapper initialPatients={patients} isAdmin={isAdmin} />
     </div>
   );
 }

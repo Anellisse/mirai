@@ -41,4 +41,8 @@ export class UpdatePatientDto {
   @IsOptional()
   @IsString()
   occupation?: string;
+
+  @IsOptional()
+  @IsString()
+  finalDiagnosis?: string;
 }

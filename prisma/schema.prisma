@@ -146,6 +146,7 @@ model Patient {
   schoolGrade         String?   // Curso (menores de edad)
   currentInstitution  String?   // Universidad/institución (adultos)
   occupation          String?   // Profesión u ocupación (adultos)
+  finalDiagnosis      String?   // Dx oficial al cierre (visible solo a admin en el listado)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   deletedAt           DateTime?

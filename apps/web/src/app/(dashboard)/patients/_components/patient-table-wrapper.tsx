@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { apiClient, PatientListItem } from '@/lib/api-client';
 import { PatientTable } from './patient-table';
 
-export function PatientTableWrapper({ initialPatients }: { initialPatients: PatientListItem[] }) {
+interface Props {
+  initialPatients: PatientListItem[];
+  isAdmin: boolean;
+}
+
+export function PatientTableWrapper({ initialPatients, isAdmin }: Props) {
   const [patients, setPatients] = useState(initialPatients);
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +26,7 @@ export function PatientTableWrapper({ initialPatients }: { initialPatients: Pati
   return (
     <div>
       {loading && <p className="text-sm text-gray-500 mb-2">Buscando...</p>}
-      <PatientTable patients={patients} onSearch={handleSearch} />
+      <PatientTable patients={patients} isAdmin={isAdmin} onSearch={handleSearch} />
     </div>
   );
 }

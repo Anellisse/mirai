@@ -240,6 +240,8 @@ export interface PatientListItem {
   reportCount: number;
   birthDate?: string;
   gender?: string;
+  interviewDate?: string;
+  finalDiagnosis?: string;
 }
 
 export interface PatientDetail {
@@ -254,6 +256,7 @@ export interface PatientDetail {
   schoolGrade?: string;
   currentInstitution?: string;
   occupation?: string;
+  finalDiagnosis?: string;
   isAssigned: boolean;
   reports: ReportSummary[];
 }

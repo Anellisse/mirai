@@ -40,4 +40,8 @@ export class CreatePatientDto {
   @IsOptional()
   @IsString()
   occupation?: string;
+
+  @IsOptional()
+  @IsString()
+  finalDiagnosis?: string;
 }

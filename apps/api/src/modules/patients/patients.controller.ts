@@ -26,7 +26,7 @@ export class PatientsController {
 
   @Get()
   findAll(@CurrentUser() user: UserPayload, @Query() query: PatientQueryDto) {
-    return this.patients.findAll(user.sub, user.organizationId, query);
+    return this.patients.findAll(user, query);
   }
 
   @Get(':id')

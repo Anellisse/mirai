@@ -51,6 +51,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
   const [schoolGrade, setSchoolGrade] = useState(patient.schoolGrade ?? '');
   const [currentInstitution, setCurrentInstitution] = useState(patient.currentInstitution ?? '');
   const [occupation, setOccupation] = useState(patient.occupation ?? '');
+  const [finalDiagnosis, setFinalDiagnosis] = useState(patient.finalDiagnosis ?? '');
 
   const age = birthDate ? calcAge(birthDate) : null;
   const isMinor = age !== null && parseInt(age) < 18;
@@ -70,6 +71,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
   function cancelEdit() {
     setName(patient.name);
     setRut(formatRut(patient.rut ?? ''));
+    setFinalDiagnosis(patient.finalDiagnosis ?? '');
     setBirthDate(toDateInput(patient.birthDate));
     setGender(patient.gender ?? '');
     setLaterality(patient.laterality ?? '');
@@ -97,6 +99,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
       if (schoolGrade) data.schoolGrade = schoolGrade;
       if (currentInstitution) data.currentInstitution = currentInstitution;
       if (occupation) data.occupation = occupation;
+      if (finalDiagnosis) data.finalDiagnosis = finalDiagnosis;
 
       await apiClient.updatePatient(patient.id, data);
       setEditing(false);
@@ -140,6 +143,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
           {patient.currentInstitution && (<><dt className="text-gray-500">Institución actual</dt><dd>{patient.currentInstitution}</dd></>)}
           {patient.occupation && (<><dt className="text-gray-500">Profesión / Ocupación</dt><dd>{patient.occupation}</dd></>)}
           {patient.interviewDate && (<><dt className="text-gray-500">Fecha de entrevista</dt><dd>{fmtDate(patient.interviewDate)}</dd></>)}
+          {patient.finalDiagnosis && (<><dt className="text-gray-500">Diagnóstico final</dt><dd className="font-medium">{patient.finalDiagnosis}</dd></>)}
         </dl>
       </div>
     );
@@ -258,6 +262,17 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
         <div>
           <label className={labelCls}>Fecha de entrevista</label>
           <input type="date" value={interviewDate} onChange={e => setInterviewDate(e.target.value)} className={inputCls} />
+        </div>
+
+        <div className="col-span-2">
+          <label className={labelCls}>Diagnóstico final</label>
+          <input
+            value={finalDiagnosis}
+            onChange={e => setFinalDiagnosis(e.target.value)}
+            className={inputCls}
+            placeholder="Ej: F84.0 Trastorno del espectro autista, nivel 1"
+          />
+          <p className="mt-0.5 text-xs text-gray-400">Se completará al cierre del proceso evaluativo.</p>
         </div>
       </div>
     </div>
