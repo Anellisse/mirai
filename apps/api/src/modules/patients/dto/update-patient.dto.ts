@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsString, Matches } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, IsString, Matches } from 'class-validator';
 
 export class UpdatePatientDto {
   @IsOptional()
@@ -45,4 +45,8 @@ export class UpdatePatientDto {
   @IsOptional()
   @IsString()
   finalDiagnosis?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  dataConsent?: boolean;
 }

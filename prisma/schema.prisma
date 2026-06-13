@@ -147,6 +147,7 @@ model Patient {
   currentInstitution  String?   // Universidad/institución (adultos)
   occupation          String?   // Profesión u ocupación (adultos)
   finalDiagnosis      String?   // Dx oficial al cierre (visible solo a admin en el listado)
+  dataConsent         Boolean?  // Autoriza compartir datos con fines pedagógicos/investigativos
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   deletedAt           DateTime?

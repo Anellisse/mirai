@@ -33,7 +33,7 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
     });
   }
 
-  const colSpan = isAdmin ? 8 : 7;
+  const colSpan = isAdmin ? 9 : 8;
 
   return (
     <div>
@@ -70,6 +70,7 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
               <th className="text-left px-4 py-3 font-medium text-gray-700">Edad entrevista</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Informes</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Acceso</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">Autorización datos</th>
               {isAdmin && (
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Dx final</th>
               )}
@@ -104,6 +105,11 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
                     ) : (
                       <span className="text-gray-400 text-xs">Sin acceso</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {p.dataConsent === true && <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Sí</span>}
+                    {p.dataConsent === false && <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">No</span>}
+                    {p.dataConsent === null && <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   {isAdmin && (
                     <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">

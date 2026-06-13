@@ -52,6 +52,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
   const [currentInstitution, setCurrentInstitution] = useState(patient.currentInstitution ?? '');
   const [occupation, setOccupation] = useState(patient.occupation ?? '');
   const [finalDiagnosis, setFinalDiagnosis] = useState(patient.finalDiagnosis ?? '');
+  const [dataConsent, setDataConsent] = useState<boolean | null>(patient.dataConsent ?? null);
 
   const age = birthDate ? calcAge(birthDate) : null;
   const isMinor = age !== null && parseInt(age) < 18;
@@ -72,6 +73,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
     setName(patient.name);
     setRut(formatRut(patient.rut ?? ''));
     setFinalDiagnosis(patient.finalDiagnosis ?? '');
+    setDataConsent(patient.dataConsent ?? null);
     setBirthDate(toDateInput(patient.birthDate));
     setGender(patient.gender ?? '');
     setLaterality(patient.laterality ?? '');
@@ -100,6 +102,7 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
       if (currentInstitution) data.currentInstitution = currentInstitution;
       if (occupation) data.occupation = occupation;
       if (finalDiagnosis) data.finalDiagnosis = finalDiagnosis;
+      if (dataConsent !== null) (data as any).dataConsent = dataConsent;
 
       await apiClient.updatePatient(patient.id, data);
       setEditing(false);
@@ -144,6 +147,16 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
           {patient.occupation && (<><dt className="text-gray-500">Profesión / Ocupación</dt><dd>{patient.occupation}</dd></>)}
           {patient.interviewDate && (<><dt className="text-gray-500">Fecha de entrevista</dt><dd>{fmtDate(patient.interviewDate)}</dd></>)}
           {patient.finalDiagnosis && (<><dt className="text-gray-500">Diagnóstico final</dt><dd className="font-medium">{patient.finalDiagnosis}</dd></>)}
+          {patient.dataConsent !== undefined && patient.dataConsent !== null && (
+            <>
+              <dt className="text-gray-500">Autorización de datos</dt>
+              <dd>
+                {patient.dataConsent
+                  ? <span className="text-green-700 font-medium">Sí, autoriza</span>
+                  : <span className="text-red-600 font-medium">No autoriza</span>}
+              </dd>
+            </>
+          )}
         </dl>
       </div>
     );
@@ -273,6 +286,34 @@ export function PatientInfo({ patient }: { patient: PatientDetail }) {
             placeholder="Ej: F84.0 Trastorno del espectro autista, nivel 1"
           />
           <p className="mt-0.5 text-xs text-gray-400">Se completará al cierre del proceso evaluativo.</p>
+        </div>
+
+        <div className="col-span-2">
+          <label className={labelCls}>
+            Autorización para compartir datos con fines pedagógicos e investigativos
+          </label>
+          <div className="flex gap-3 mt-1">
+            {([
+              { value: true,  label: 'Sí autoriza' },
+              { value: false, label: 'No autoriza' },
+              { value: null,  label: 'Sin responder' },
+            ] as const).map(opt => (
+              <label key={String(opt.value)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border cursor-pointer text-sm transition
+                ${dataConsent === opt.value
+                  ? 'border-brand-500 bg-brand-50 text-brand-800 font-medium'
+                  : 'border-gray-200 hover:border-brand-300'}`}
+              >
+                <input
+                  type="radio"
+                  name="dataConsent"
+                  checked={dataConsent === opt.value}
+                  onChange={() => setDataConsent(opt.value)}
+                  className="accent-brand-600"
+                />
+                {opt.label}
+              </label>
+            ))}
+          </div>
         </div>
       </div>
     </div>

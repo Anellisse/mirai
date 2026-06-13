@@ -65,6 +65,7 @@ export class PatientsService {
         interviewDate: true,
         finalDiagnosis: true,
         createdAt: true,
+        dataConsent: true,
         createdById: true,
         createdBy: { select: { name: true } },
         _count: { select: { reports: { where: { deletedAt: null } } } },
@@ -81,6 +82,7 @@ export class PatientsService {
           reportCount: (p as any)._count?.reports ?? 0,
           createdAt: p.createdAt,
           createdByName: (p as any).createdBy?.name ?? null,
+          dataConsent: (p as any).dataConsent ?? null,
         };
         if (!assigned) return base;
         return {
@@ -130,6 +132,7 @@ export class PatientsService {
       currentInstitution: dto.currentInstitution,
       occupation: dto.occupation,
       finalDiagnosis: dto.finalDiagnosis,
+      dataConsent: dto.dataConsent,
       organizationId,
       createdById: userId,
     };
@@ -157,6 +160,7 @@ export class PatientsService {
       currentInstitution: dto.currentInstitution,
       occupation: dto.occupation,
       finalDiagnosis: dto.finalDiagnosis,
+      dataConsent: dto.dataConsent,
     };
 
     if (dto.rut) {
