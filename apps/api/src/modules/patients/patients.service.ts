@@ -64,7 +64,9 @@ export class PatientsService {
         gender: true,
         interviewDate: true,
         finalDiagnosis: true,
+        createdAt: true,
         createdById: true,
+        createdBy: { select: { name: true } },
         _count: { select: { reports: { where: { deletedAt: null } } } },
       },
     });
@@ -77,6 +79,8 @@ export class PatientsService {
           name: p.name,
           isAssigned: assigned,
           reportCount: (p as any)._count?.reports ?? 0,
+          createdAt: p.createdAt,
+          createdByName: (p as any).createdBy?.name ?? null,
         };
         if (!assigned) return base;
         return {

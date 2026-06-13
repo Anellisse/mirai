@@ -33,7 +33,7 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
     });
   }
 
-  const colSpan = isAdmin ? 6 : 5;
+  const colSpan = isAdmin ? 8 : 7;
 
   return (
     <div>
@@ -65,6 +65,8 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Nombre</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">Ingreso</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">Profesional</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Edad entrevista</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Informes</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Acceso</th>
@@ -90,6 +92,10 @@ export function PatientTable({ patients, isAdmin, onSearch }: Props) {
               return (
                 <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{p.name}</td>
+                  <td className="px-4 py-3 text-gray-600 tabular-nums whitespace-nowrap">
+                    {new Date(p.createdAt).toLocaleDateString('es-CL')}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">{p.createdByName ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-600 tabular-nums">{age}</td>
                   <td className="px-4 py-3 text-gray-600">{p.reportCount}</td>
                   <td className="px-4 py-3">

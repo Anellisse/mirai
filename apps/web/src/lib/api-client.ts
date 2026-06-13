@@ -238,6 +238,8 @@ export interface PatientListItem {
   name: string;
   isAssigned: boolean;
   reportCount: number;
+  createdAt: string;
+  createdByName: string | null;
   birthDate?: string;
   gender?: string;
   interviewDate?: string;
